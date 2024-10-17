@@ -1,0 +1,11 @@
+[project]
+name = "AzureTextAnalysis"
+version = "1.0.0"
+description = "A python web app that retrieves from Azure Text Analytics"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "azure-ai-textanalytics>=5.3.0",
+    "flask>=3.0.3",
+    "python-dotenv>=1.0.1",
+]
