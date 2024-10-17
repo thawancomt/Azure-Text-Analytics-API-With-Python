@@ -1,10 +1,8 @@
 from azure.ai.textanalytics import *
 from azure.core.credentials import AzureKeyCredential
-from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
 from collections import namedtuple
 from dotenv import load_dotenv, find_dotenv
 import os
-
 load_dotenv()
 
 default_text_test = """
@@ -37,13 +35,9 @@ class AzureTextAnalyticsApi:
         Create a TextAnalyticsClient
         """
         ta_credential = AzureKeyCredential(self.__credential)
-        try:
-            text_analytics_client = TextAnalyticsClient(
+        text_analytics_client = TextAnalyticsClient(
                     endpoint=self.endpoint, 
                     credential=ta_credential)
-            
-        except:
-            pass
         
         return text_analytics_client
 
