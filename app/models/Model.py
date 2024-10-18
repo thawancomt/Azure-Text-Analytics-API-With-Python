@@ -67,6 +67,11 @@ class SqliteDatabase:
                             id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                             name TEXT UNIQUE
                             );
+                            CREATE TABLE IF NOT EXISTS Text_tags (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+                            input_id INTEGER
+                            tag_id INTEGER
+                            );
 
                           """)
     # HELPERS
