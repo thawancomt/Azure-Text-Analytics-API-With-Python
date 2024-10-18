@@ -1,113 +1,153 @@
-<label for="">Raw Output</label>
-<textarea name="" id="" style="width: 100%;  height: 30%;">
-    {% for message in get_flashed_messages() %}
-    {{ message }}
-{% endfor %}
-</textarea>
-
-<!-- Sentimento -->
-{% if sentiment %}
-<table>
-    <thead>
-        <tr>
-            <th>Text</th>
-            <th>Sentimento</th>
-            <th>Compliance</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for sentence in sentiment[0].sentences %}
-            <tr>
-                <td>{{ sentence.text}}</td>
-                <td>{{ sentence.sentiment }}</td>
-                <td>{{ sentence.confidence_scores[sentence.sentiment] }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
-{% if entities %}
-<table>
-    <thead>
-        <tr>
-            <th>Entity</th>
-            <th>Category</th>
-            <th>Sub-Category</th>
-            <th>Position in the phrase</th>
-            <th>Compliance</th>
-            <th>MATCHES</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entity in entities[0].entities %}
-        <tr>
-            <td>{{entity.text}}</td>
-            <td>{{entity.category}}</td>
-            <td>{{entity.subcategory}}</td>
-            <td>{{entity.offset}}</td>
-            <td>{{entity.confidence_score}}</td>
-            <td>{{entity.matches}}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
 
 
-<br><br>
-<br>
-{% if linked_entities %}
-<table>
-    <thead>
-        <tr>
-            <th>Entity name</th>
-            <th>Url</th>
-            <th>Source</th>
-            <th>Matche info</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for linked_entity in linked_entities[0].entities %}
-            <tr>
-                <td style="border: 1px solid black;">{{linked_entity.name}}</td>
-                <td style="border: 1px solid black;"><a href="{{linked_entity.url}}">{{linked_entity.url}}</a></td>
-                <td style="border: 1px solid black;">{{linked_entity.data_source}}</td>
-                <td style="border: 1px solid black;">{{linked_entity.matches[0].text}} |  | {{linked_entity.matches[0].confidence_score}}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
-<br><br>
-{% if key_phrases %}
-<span>Tags:</span>
-<ul>
-    {% for key in key_phrases[0].key_phrases %}
-         <li>
-            {{key}}
-         </li>
-        {% endfor %}
-</ul>
-{% endif %}
 
-{% if language %}
-    <span>The text is in: {{language[0].primary_language.name}}</span>
-{% endif %}
+<div class="box-chat">
+    <section class="chat">
+        {% if sentiment %}
+            <div class=" ">
+                <table class="table-output">
+                    <caption class="th-line">
+                        Overal text sentiment : {{sentiment[0].sentiment | upper}}
+                        <br>
+                        Text lang : {{language[0].primary_language.name}}
+                    </caption>
+                    <thead class="">
+                        <tr>
+                            <th >
+                                Sentence
+                            </th>
+                            <th >
+                                Sentiment
+                            </th>
+                            <th >
+                                Confidence Score
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sentence in sentiment[0].sentences %}
+                        <tr >
+                            <th >
+                                {{ sentence.text }}
+                            </th>
+                            <td >
+                                {{ sentence.sentiment }}
+                            </td>
+                            <td >
+                                {{ (sentence.confidence_scores[sentence.sentiment] * 100) | int }} %
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+        {% if entities %}
+        <div >
+            <table class="table-output">
+                <caption>
+                    All entities on the text
+                </caption>
+                <thead>
+                    <tr>
+                        <th>Entity</th>
+                        <th>Category</th>
+                        <th>Sub-Category</th>
+                        <th>Position in the phrase</th>
+                        <th>Compliance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entity in entities[0].entities %}
+                    <tr>
+                        <td>{{entity.text}}</td>
+                        <td>{{entity.category}}</td>
+                        <td>{{entity.subcategory}}</td>
+                        <td>{{entity.offset}}</td>
+                        <td>{{(entity.confidence_score * 100) | int}} %</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            </div>
+        {% endif %}
+        {% if linked_entities %}
+            <div>
+                <table class="table-output">
+                        <caption>
+                            The external entities data
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th>Entity name</th>
+                                <th>Url</th>
+                                <th>Source</th>
+                                <th>Matche info</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linked_entity in linked_entities[0].entities %}
+                                <tr>
+                                    <td >{{linked_entity.name}}</td>
+                                    <td ><a href="{{linked_entity.url}}">{{linked_entity.url}}</a></td>
+                                    <td >{{linked_entity.data_source}}</td>
+                                    <td >{{linked_entity.matches[0].text}} |  | {{linked_entity.matches[0].confidence_score}}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% if key_phrases %}
+            <div class="tags-row">
+                <button>Tags: </button>
+                    {% for tag in key_phrases[0].key_phrases %}
+                        <button>{{tag | title }}</button>
+                    {% endfor %}
+            </div>
+            {% endif %}
+    </section>
+</div>
 
-<label for="">Enter your input</label>
-<form action=" {{url_for('index')}} " method="post" enctype="application/json">
-    <input type="text" name="text" id="" placeholder="Digite seu texto aqui">
-    <label for="sentiment">Sentiment</label>
-    <input type="checkbox" name="sentiment" id="sentiment">
-    <label for="entities">Entities</label>
-    <input type="checkbox" name="entities" id="entities">
-    <label for="linked_entities">Linked Entities</label>
-    <input type="checkbox" name="linked_entities" id="linked_entities">
-    <label for="key_phrases">Key Phrases</label>
-    <input type="checkbox" name="key_phrases" id="key_phrases">
-    <label for="key_phrases">Detect Language</label>
-    <input type="checkbox" name="language" id="key_phrases">
-    <label for="key_phrases">All Analyses</label>
-    <input type="checkbox" name="all_actions" id="key_phrases">
-    <button>Analisar</button>
-</form>
+
+
+
+<div class="box">
+    <div class="box-user-input">
+        <form action=" {{ url_for('index') }} " class="form-primary" id="input-user" method="post" enctype="multipart/form-data">
+            <div class="text-section">
+                <textarea name="text" id="" class="text-entry"></textarea>
+                <button type="submit" class="btn-send" id="send-button">Analisar</button>   
+            </div>
+            <div class="options">
+                <div>
+                    <label for="">Get sentiment</label>
+                    <input type="checkbox" name="sentiment" id="">
+                </div>
+                <div>
+                    <label for="">Get Entities</label>
+                    <input type="checkbox" name="entities" id="">
+                </div>
+                <div>
+                    <label for="">Get Linked Entities</label>
+                    <input type="checkbox" name="linked_entities" id="">
+
+                </div>
+                <div>
+                    <label for="">Get Key Words</label>
+                    <input type="checkbox" name="key_phrases" id="">
+                </div>
+                <div>
+                    <label for="">Full Analyse</label>
+                    <input type="checkbox" name="all_actions" id="">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="static/output.css">
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+<script src="static/sendForm.js"></script>

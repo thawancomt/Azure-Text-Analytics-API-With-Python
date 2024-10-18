@@ -9,7 +9,7 @@ from azure.ai.textanalytics import (RecognizeEntitiesResult, CategorizedEntity, 
 conn = sqlite3.connect('interections.sqlite', check_same_thread=False)
 cur = conn.cursor()
 
-class SqlitDatabase:
+class SqliteDatabase:
     def __init__(self):
         pass
     

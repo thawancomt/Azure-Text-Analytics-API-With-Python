@@ -5,7 +5,7 @@ from .AzureTextAnalytics import *
 from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
 import os
 import sys
-from .models.Model import Database
+from .models.Model import SqliteDatabase
 
 
 class ResponseAzure(TypedDict):
@@ -19,7 +19,7 @@ class TextApp:
     def __init__(self):
         self.App : Flask = Flask(__name__)
         self.App.secret_key = os.getenv('SECRET_KEY')
-        self.database = Database()
+        self.database = SqliteDatabase()
         self.database.CreateTables()
 
         try:
@@ -72,15 +72,15 @@ class TextApp:
                         Context['linked_entities'] = self.TextAnalizer.GetLinkedEntities()
                     if 'key_phrases' in Actions:
                         Context['key_phrases'] = self.TextAnalizer.GetKeyPhrases()
-                    if 'language' in Actions:
-                        Context['language'] = self.TextAnalizer.GetLanguage()
+                        
             except Exception as err:
                 flash('An erros has ocorred while processing your data:', err)
-                return render_template('index.html')
+                
+                return render_template('index.html', **Context)
         else:
             pass
 
-            
+        Context['language'] = self.TextAnalizer.GetLanguage()
         return render_template('index.html', **Context)
 
 app = TextApp().App

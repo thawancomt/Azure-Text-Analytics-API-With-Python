@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary) var(--primary);
+  }
+  
+  /* Chrome, Edge, and Safari */
+  *::-webkit-scrollbar {
+    width: 15px;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: var(--primary);
+    border-radius: 5px;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--secondary);
+    border-radius: 14px;
+    border: 3px solid var(--primary);
+  }
+
+body {
+    @apply
+    bg-slate-900
+    h-full
+    w-full
+}
+
+
+.box {
+    @apply
+    w-full
+    h-fit
+    absolute bottom-12
+
+    flex justify-center
+    transition-all duration-1000 ease-in-out
+}
+
+.box-user-input {
+    @apply
+    min-w-[20%]
+    max-w-[90%]
+    w-full
+    h-fit
+    transition-all duration-1000 ease-in-out
+}
+
+.text-entry {
+    @apply
+    w-6/12
+    hover:h-32
+    transition-all duration-1000 ease-in-out
+    block p-2.5 h-12 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500
+}
+
+.text-section {
+    @apply
+    flex items-center justify-center
+    w-full h-full p-2
+    gap-2
+    rounded-xl
+    transition-all duration-1000 ease-in-out
+}
+
+.label-text {
+    @apply
+    w-1/12 h-12
+    flex items-center justify-center
+    text-center font-semibold text-gray-900
+    bg-orange-200
+    rounded-lg
+    transition-all duration-1000 ease-in-out
+}
+
+.btn-send{
+    @apply
+    h-12 px-3
+    text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm  text-center 
+}
+
+.form-primary {
+    @apply
+    flex flex-col justify-center items-center
+}
+
+.options {
+    @apply
+    flex 
+    gap-3
+}
+
+.options div label {
+    @apply
+    font-semibold
+    text-white
+}
+
+.options div input {
+    @apply
+    w-8 h-8 text-blue-600 bg-gray-100 border-gray-300 rounded-xl focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600
+}
+
+.th-line {
+    @apply
+    bg-white border-b dark:bg-gray-800 dark:border-gray-700 px-6 py-4 break-words
+    font-medium text-gray-900 whitespace-normal  dark:text-white 
+}
+.box-chat {
+    @apply
+    flex justify-center items-center
+    w-[100%] h-[80%] 
+    
+}
+.chat {
+    @apply
+    space-y-5
+    bg-slate-600 rounded-xl
+    w-3/6
+    h-5/6
+    p-2
+    rounded-lg
+    overflow-y-scroll overflow-x-hidden
+}
+
+.table-output {
+    @apply
+    w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400
+    rounded-xl
+}
+
+.table-output thead, .table-output thead tr, .table-output thead tr td, .table-output thead tr th {
+    @apply
+    text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 p-4
+}
+.table-output tbody tr, .table-output tbody tr td, .table-output tbody tr th , table caption {
+    @apply
+    bg-white border-b dark:bg-gray-800 dark:border-gray-700 p-4 break-words
+    font-medium text-gray-900 whitespace-normal  dark:text-white
+}
+
+.overview {
+    @apply
+    bg-gray-900
+}
+
+section div {
+    @apply
+    overflow-x-auto rounded-xl
+}
+
+a {
+    @apply
+    font-medium text-blue-600 dark:text-blue-500 hover:underline
+}
+
+.tags-row {
+    @apply
+    flex
+    gap-4 p-1
+    w-full
+    bg-slate-500
+    overflow-x-visible
+    
+}
+.tags-row button {
+    @apply
+    text-nowrap
+    px-4 rounded-lg
+    text-white
+    bg-gray-900
+    min-w-fit
+    max-w-60
+}

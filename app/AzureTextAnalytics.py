@@ -1,5 +1,6 @@
 from azure.ai.textanalytics import *
 from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
 from collections import namedtuple
 from dotenv import load_dotenv, find_dotenv
 import os
@@ -40,9 +41,6 @@ class AzureTextAnalyticsApi:
                     credential=ta_credential)
         
         return text_analytics_client
-
-    def __create_response(response):
-        return [doc for doc in response if not doc.is_error]
 
     def GetSentiment(self) -> AnalyzeSentimentResult:
         response = self.client.analyze_sentiment(documents = [self.document])
