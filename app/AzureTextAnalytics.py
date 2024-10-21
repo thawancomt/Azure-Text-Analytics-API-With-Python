@@ -62,7 +62,7 @@ class AzureTextAnalyticsApi:
         response = self.client.detect_language([self.document])
         return [doc for doc in response if not doc.is_error]
     
-    def GetAllInformation(self) -> None:
+    def GetAllInformation(self) -> tuple[AnalyzeSentimentResult, RecognizeEntitiesResult, RecognizeLinkedEntitiesResult, ExtractKeyPhrasesResult, DetectLanguageResult]:
         poller = self.client.begin_analyze_actions(documents=[self.document],
                                                    actions=self.all_analyses)
         result = poller.result()

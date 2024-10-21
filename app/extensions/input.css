@@ -51,12 +51,14 @@ body {
 }
 
 .text-entry {
-    @apply
-    w-6/12
-    hover:h-32
-    transition-all duration-1000 ease-in-out
-    block p-2.5 h-12 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500
+    @apply block p-2.5 h-12 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300
+           focus:ring-blue-500 focus:border-blue-500 focus:w-[80%] transition-all 
+           duration-1000 ease-in-out dark:bg-gray-700 dark:border-gray-600 
+           dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 
+           dark:focus:border-blue-500
+           required:valid:font-extrabold
 }
+
 
 .text-section {
     @apply

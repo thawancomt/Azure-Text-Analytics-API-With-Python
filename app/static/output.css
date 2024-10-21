@@ -1605,7 +1605,6 @@ body {
 .text-entry {
   display: block;
   height: 3rem;
-  width: 50%;
   border-radius: 0.5rem;
   border-width: 1px;
   --tw-border-opacity: 1;
@@ -1622,11 +1621,12 @@ body {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.text-entry:hover {
-  height: 8rem;
+.text-entry:valid:required {
+  font-weight: 800;
 }
 
 .text-entry:focus {
+  width: 80%;
   --tw-border-opacity: 1;
   border-color: rgb(63 131 248 / var(--tw-border-opacity));
   --tw-ring-opacity: 1;

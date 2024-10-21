@@ -1,4 +1,5 @@
 
+<video id="myVideo" src="static/video.mp4" width="200px" controls></video>
 
 
 <div class="box-chat">
@@ -17,6 +18,9 @@
                                 Sentence
                             </th>
                             <th >
+                                Sentence offset
+                            </th>
+                            <th >
                                 Sentiment
                             </th>
                             <th >
@@ -29,6 +33,9 @@
                         <tr >
                             <th >
                                 {{ sentence.text }}
+                            </th>
+                            <th >
+                                {{ sentence.offset }}
                             </th>
                             <td >
                                 {{ sentence.sentiment }}
@@ -53,7 +60,7 @@
                         <th>Entity</th>
                         <th>Category</th>
                         <th>Sub-Category</th>
-                        <th>Position in the phrase</th>
+                        <th>Entity offset</th>
                         <th>Compliance</th>
                     </tr>
                 </thead>
@@ -117,13 +124,13 @@
     <div class="box-user-input">
         <form action=" {{ url_for('index') }} " class="form-primary" id="input-user" method="post" enctype="multipart/form-data">
             <div class="text-section">
-                <textarea name="text" id="" class="text-entry"></textarea>
+                <input type="text" name="text" id="" class="text-entry" pattern="[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$" placeholder="Insert your text">
                 <button type="submit" class="btn-send" id="send-button">Analisar</button>   
             </div>
             <div class="options">
                 <div>
                     <label for="">Get sentiment</label>
-                    <input type="checkbox" name="sentiment" id="">
+                    <input type="checkbox" name="sentiment" id="" >
                 </div>
                 <div>
                     <label for="">Get Entities</label>
@@ -143,9 +150,18 @@
                     <input type="checkbox" name="all_actions" id="">
                 </div>
             </div>
+        <input type="file" name="doc" id="s" accept="application/pdf">
         </form>
     </div>
 </div>
+{% for msg in get_flashed_messages() %}
+
+{{msg}}
+
+{% endfor %}
+
+
+
 
 <link rel="stylesheet" href="static/output.css">
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
