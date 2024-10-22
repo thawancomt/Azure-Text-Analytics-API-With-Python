@@ -35,7 +35,7 @@ class SqliteDatabase:
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                         entity TEXT,
                         category_id INTEGER,
-                        sub_category_id INTEGER,
+                        subcategory_id INTEGER,
                         compliance REAL
                         );
                           
@@ -146,23 +146,40 @@ class SqliteDatabase:
         self.InsertSentencesTags(sentences, key_phrases)
 
         self.InsertSentencesInputs(sentences, UserInput)
+
+        self.InsertEntitiesInputs(UserInput, entities)
     
     def InsertEntitiesInputs(self, UserInput : str, Entities : list):
         """
         CREATE TABLE IF NOT EXISTS Entities_Inputs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                         input_id INTERGER,
+                        cat
+                        sub
                         entity_id INTEGER,
                         offset INTEGER
                         );
         """
         Entities : list[CategorizedEntity] = Entities[0].entities
 
-        InputId = cur.execute("SELECT id FROM Inputs WHERE input == (?)", (UserInput,)).fetchone()[0]
+        InputId = cur.execute("SELECT id FROM Inputs WHERE input = (?)", (UserInput,)).fetchone()[0]
 
         for Entity in Entities:
-            cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id offset) values (?, ?, ?)",
-                        (InputId, 1, Entity.category, Entity.subcategory, Entity.offset,))
+            CategoryId = self.GetCategoryByName(Entity.category)[0]
+            SubCategoryId = self.GetSubCategoryByName(Entity.subcategory)
+
+            if SubCategoryId is None:
+                SubCategoryId = None
+                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id IS NULL", (Entity.text, CategoryId)).fetchone()[0]
+            else:
+                SubCategoryId = SubCategoryId[0]
+                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (Entity.text, CategoryId, SubCategoryId)).fetchone()[0]
+            
+            OffSet = Entity.offset
+            cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id, offset) values (?, ?, ?, ?, ?)",
+                        (InputId, EntityId, CategoryId, SubCategoryId, OffSet))
+            
+            conn.commit()
 
     def InsertTextTags(self, UserInput : str, Tags) -> None:
         Tags : list[str] = Tags[0].key_phrases
@@ -212,16 +229,19 @@ class SqliteDatabase:
                 SubCategoryId = entity.subcategory
                 self.__InsertSubCategory(entity.subcategory)
             else:
-                SubCategoryId = 'None'
-                self.__InsertSubCategory('None')
+                SubCategoryId = None
+                self.__InsertSubCategory(None)
             
             
             Text, CategoryId= entity.text, self.GetCategoryByName(entity.category)[0]
             SubCategoryId = self.GetSubCategoryByName(SubCategoryId)[0]
 
-            Compliance = entity.confidence_score
-            cur.execute("INSERT OR IGNORE INTO Entities (entity, category_id, sub_category_id, compliance) values (?, ?, ?, ?)", (Text, CategoryId, SubCategoryId, Compliance))
-            conn.commit()
+            ThisRelationExists = cur.execute("SELECT entity, category_id, subcategory_id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (entity.text, CategoryId, SubCategoryId)).fetchone()
+            
+            if not ThisRelationExists:
+                Compliance = entity.confidence_score
+                cur.execute("INSERT OR IGNORE INTO Entities (entity, category_id, subcategory_id, compliance) values (?, ?, ?, ?)", (Text, CategoryId, SubCategoryId, Compliance))
+                conn.commit()
 
     def InsertInput(self, UserInput : str, Sentiment : str) -> None:
         SentimentId = self.GetSentimentByName(Sentiment)[0]
@@ -233,6 +253,9 @@ class SqliteDatabase:
         return cur.execute("SELECT id FROM Categories WHERE name == (?)", (Category,)).fetchone()
 
     def GetSubCategoryByName(self, SubCategory) -> tuple[int]:
+        if SubCategory is None:
+            return cur.execute("SELECT id FROM Sub_Categories WHERE name IS NULL").fetchone()
+        
         return cur.execute("SELECT id FROM Sub_Categories WHERE name == (?)", (SubCategory,)).fetchone()
 
     def InsertTags(self, Tags) -> None:
@@ -240,11 +263,7 @@ class SqliteDatabase:
         
         cur.executemany("INSERT OR IGNORE INTO Tags (name) values (?)", [(Tag, ) for Tag in Tags])
         conn.commit()
-        
 
-    
-    
-    
     def InsertSentiment(self, sentiment : str) -> int:
         cur.execute("INSERT OR IGNORE INTO Sentiments (name) values (?) ", (sentiment,))
         conn.commit()

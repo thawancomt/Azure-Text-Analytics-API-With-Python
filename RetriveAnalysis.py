@@ -48,10 +48,13 @@ class RetriveAnalysis:
     def GetEntities(self):
         pass
 
+    def f(self):
+        return cur.execute("SELECT id FROM Sub_Categories WHERE name IS NULL").fetchone()
+
 
 userInput = 'The style of a narrative text is distinctive. It employs a chronological sequencing of events. Coherent, right-branching sentences, varying in length, create rhythm and draw the reader into the unfolding story. Active voice is favored to maintain directness and immediacy, bringing scenes alive.'
 a = RetriveAnalysis(userInput)
-print(a.GetSentences())
+print(a.f())
         
         
     
