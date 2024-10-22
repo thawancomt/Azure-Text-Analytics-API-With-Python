@@ -65,3 +65,19 @@ The persistent storage capability unlocks even greater potential:
 ## 🚀 Get Involved
 
 Contribute to this project and explore the exciting world of Natural Language Processing!
+
+## Installation and Running
+
+This project uses the `uv` package manager for streamlined setup. Ensure you have Python 3.13 or higher installed.
+
+**1. Clone the Repository:**
+
+```bash
+git clone https://github.com/thawancomt/your-repository-name.git # Replace with your repo URL
+cd your-repository-name
+
+uv install
+
+KEY=<your_azure_text_analytics_key>
+ENDPOINT=<your_azure_text_analytics_endpoint>
+SECRET_KEY=<your_flask_secret_key>
