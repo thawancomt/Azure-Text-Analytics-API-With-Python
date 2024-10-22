@@ -1,4 +1,4 @@
-from app.models.Model import cur, conn
+from app.models.Model import cur, conn, sqlite3
 
 from collections import namedtuple
 
@@ -13,7 +13,10 @@ class RetriveAnalysis:
         self.SentenceObject = SentenceObject
 
     def __GetUserInput(self) -> int | None:
-        RetriviedInput = cur.execute("SELECT * FROM Inputs WHERE input == (?)", (self.UserInput,)).fetchone()
+        try:
+            RetriviedInput = cur.execute("SELECT * FROM Inputs WHERE input == (?)", (self.UserInput,)).fetchone()
+        except sqlite3.OperationalError:
+            return None
 
         if not RetriviedInput:
             return None
@@ -30,8 +33,6 @@ class RetriveAnalysis:
                                                                   WHERE input_id == (?)
                                                                   ORDER BY offset ASC""",(self.InputId,)).fetchall()
         
-        
-
         if not RetriviedSentences:
             return None
         
@@ -42,19 +43,18 @@ class RetriveAnalysis:
             SentenceObject = self.SentenceObject(text=SentenceText, sentiment_id=SentenceSentiment, compliance=Compliance, offset=OffSet)
 
             Sentences.append(SentenceObject)
-        
+
+        self.sentences = Sentences
         return Sentences
 
-    def GetEntities(self):
+    def GetEntitiesInputs(self):
+        # RetriviedEntities = cur.execute("""SELECT input_id, Categories.name, Subcategories.name, entity_id, offset
+        #                                 FROM Entities_inputs
+        #                                 JOIN Categories ON category_id = Categories.id
+        #                                 JOIN Subcategories ON subcategory_id = Subcategories.id """).fetchall()
         pass
+        
 
     def f(self):
         return cur.execute("SELECT id FROM Sub_Categories WHERE name IS NULL").fetchone()
 
-
-userInput = 'The style of a narrative text is distinctive. It employs a chronological sequencing of events. Coherent, right-branching sentences, varying in length, create rhythm and draw the reader into the unfolding story. Active voice is favored to maintain directness and immediacy, bringing scenes alive.'
-a = RetriveAnalysis(userInput)
-print(a.f())
-        
-        
-    

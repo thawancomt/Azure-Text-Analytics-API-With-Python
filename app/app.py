@@ -6,6 +6,7 @@ from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationErr
 import os
 import sys
 from .models.Model import SqliteDatabase, cur, conn
+from RetriveAnalysis import RetriveAnalysis
 
 
 # import fileStorage
@@ -49,6 +50,14 @@ class TextApp:
                 Data : dict = request.form.to_dict()
 
                 Document = Data.get('text')
+
+                retriever = RetriveAnalysis(Document)
+                Sentences = retriever.GetSentences()
+                retriever.GetEntitiesInputs()
+
+                if Sentences:
+                    return Sentences
+
                 Actions = Data.keys()
 
                 self.TextAnalizer.document = Document

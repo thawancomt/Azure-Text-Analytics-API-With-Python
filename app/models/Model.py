@@ -176,10 +176,15 @@ class SqliteDatabase:
                 EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (Entity.text, CategoryId, SubCategoryId)).fetchone()[0]
             
             OffSet = Entity.offset
-            cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id, offset) values (?, ?, ?, ?, ?)",
-                        (InputId, EntityId, CategoryId, SubCategoryId, OffSet))
-            
-            conn.commit()
+
+            ThisRelationExist = cur.execute("SELECT 1 FROM Entities_inputs WHERE input_id = ? AND entity_id = ? AND category_id = ? AND subcategory_id = ? AND offset = ?", (InputId, EntityId, CategoryId, SubCategoryId, OffSet)).fetchone()
+
+            if not ThisRelationExist:
+
+                cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id, offset) values (?, ?, ?, ?, ?)",
+                            (InputId, EntityId, CategoryId, SubCategoryId, OffSet))
+                
+                conn.commit()
 
     def InsertTextTags(self, UserInput : str, Tags) -> None:
         Tags : list[str] = Tags[0].key_phrases
@@ -213,11 +218,15 @@ class SqliteDatabase:
     
     def InsertSentencesInputs(self, Sentences : list[str], UserInput : str) -> None:
         InputId = cur.execute("SELECT id FROM Inputs WHERE input == (?)", (UserInput,)).fetchone()[0]
-
+        
         for sentence, sentimentId, confidence, offset in Sentences:
             sentence_Id = cur.execute("SELECT id FROM Sentences WHERE text == (?)", (sentence, )).fetchone()[0]
-            cur.execute("INSERT OR IGNORE INTO Sentences_inputs (input_id, sentence_id, offset) values (?, ?, ?)", (InputId, sentence_Id, offset)) 
-            conn.commit()
+
+            ThisRelationExist = cur.execute("SELECT 1 FROM Sentences_inputs WHERE input_id == (?) AND sentence_id == (?) AND offset == (?)", (InputId, sentence_Id, offset)).fetchone()
+            
+            if not ThisRelationExist:
+                cur.execute("INSERT OR IGNORE INTO Sentences_inputs (input_id, sentence_id, offset) values (?, ?, ?)", (InputId, sentence_Id, offset)) 
+                conn.commit()
 
     def InsertEntity(self, entity) -> None:
         entities : list[CategorizedEntity] = entity[0].entities
