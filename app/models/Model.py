@@ -33,10 +33,19 @@ class SqliteDatabase:
                         
                         CREATE TABLE IF NOT EXISTS Entities (
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-                        entity TEXT UNIQUE,
+                        entity TEXT,
                         category_id INTEGER,
                         sub_category_id INTEGER,
                         compliance REAL
+                        );
+                          
+                        CREATE TABLE IF NOT EXISTS Entities_Inputs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+                        input_id INTERGER,
+                        category_id INTEGER,
+                        subcategory_id INTEGER,
+                        entity_id INTEGER,
+                        offset INTEGER
                         );
                         
                         CREATE TABLE IF NOT EXISTS Linked_Entities (
@@ -86,6 +95,7 @@ class SqliteDatabase:
                         );
                           """)
         conn.commit()
+
     # HELPERS
     def __InsertCategory(self, Category) -> None:
         cur.execute("INSERT OR IGNORE INTO Categories (name) values (?)", (Category, ))
@@ -136,6 +146,23 @@ class SqliteDatabase:
         self.InsertSentencesTags(sentences, key_phrases)
 
         self.InsertSentencesInputs(sentences, UserInput)
+    
+    def InsertEntitiesInputs(self, UserInput : str, Entities : list):
+        """
+        CREATE TABLE IF NOT EXISTS Entities_Inputs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+                        input_id INTERGER,
+                        entity_id INTEGER,
+                        offset INTEGER
+                        );
+        """
+        Entities : list[CategorizedEntity] = Entities[0].entities
+
+        InputId = cur.execute("SELECT id FROM Inputs WHERE input == (?)", (UserInput,)).fetchone()[0]
+
+        for Entity in Entities:
+            cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id offset) values (?, ?, ?)",
+                        (InputId, 1, Entity.category, Entity.subcategory, Entity.offset,))
 
     def InsertTextTags(self, UserInput : str, Tags) -> None:
         Tags : list[str] = Tags[0].key_phrases
@@ -175,7 +202,7 @@ class SqliteDatabase:
             cur.execute("INSERT OR IGNORE INTO Sentences_inputs (input_id, sentence_id, offset) values (?, ?, ?)", (InputId, sentence_Id, offset)) 
             conn.commit()
 
-    def InsertEntity(self, entity ) -> None:
+    def InsertEntity(self, entity) -> None:
         entities : list[CategorizedEntity] = entity[0].entities
 
         for entity in entities:
