@@ -1,60 +1,77 @@
-from app.models.Model import cur, conn, sqlite3
-
+from typing import TypedDict, List, Tuple
 from collections import namedtuple
+from app.models.Model import cur, sqlite3
+from DTO import *
 
-
-
-SentenceObject = namedtuple('Sentence', ['text', 'sentiment_id', 'compliance', 'offset'])
 
 class RetriveAnalysis:
-    def __init__(self, UserInput):
-        self.UserInput = UserInput
-        self.InputId = self.__GetUserInput()
-        self.SentenceObject = SentenceObject
+    """Class to retrieve analysis from the database based on the user input"""
+    def __init__(self, user_input : str):
+        self.user_input : str = user_input
+        self.input_id : int = 0
+        self.__get_input_id()
 
-    def __GetUserInput(self) -> int | None:
+        self.sentiment_name : str = cur.execute("SELECT name FROM Sentiments \
+                                                JOIN Inputs \
+                                                    ON Inputs.sentiment_id = Sentiments.id \
+                                                WHERE Inputs.id = ?", (self.input_id,)).fetchone()
+        if self.sentiment_name:
+            self.sentiment_name = self.sentiment_name[0]
+
+
+    def __get_input_id(self) ->  None:
         try:
-            RetriviedInput = cur.execute("SELECT * FROM Inputs WHERE input == (?)", (self.UserInput,)).fetchone()
+            retrieve_input = cur.execute("SELECT * FROM Inputs WHERE input == (?)", \
+                                         (self.user_input,)).fetchone()
         except sqlite3.OperationalError:
             return None
 
-        if not RetriviedInput:
+        if not retrieve_input:
             return None
         
-        InputId = RetriviedInput[0]
-        return InputId
+        self.input_id : int = retrieve_input[0]
 
-    def GetSentences(self) -> list[SentenceObject]:
-        RetriviedSentences : tuple[int, int, int]= cur.execute("""SELECT input_id, sentence_id, offset, Sentences.sentiment_id FROM Sentences_inputs
-                                                                  JOIN Inputs
-                                                                  ON Inputs.id = input_id
-                                                                  JOIN Sentences
-                                                                  ON Sentences.id = sentence_id
-                                                                  WHERE input_id == (?)
-                                                                  ORDER BY offset ASC""",(self.InputId,)).fetchall()
-        
-        if not RetriviedSentences:
-            return None
-        
-        Sentences : list = []
+        return self.input_id
 
-        for InputId_, SentenceId, OffSet, SentimentId  in RetriviedSentences:
-            SentenceText, SentenceSentiment, Compliance = cur.execute("SELECT text, sentiment_id, compliance FROM Sentences WHERE id == (?)", (SentenceId, )).fetchone()
-            SentenceObject = self.SentenceObject(text=SentenceText, sentiment_id=SentenceSentiment, compliance=Compliance, offset=OffSet)
-
-            Sentences.append(SentenceObject)
-
-        self.sentences = Sentences
-        return Sentences
-
-    def GetEntitiesInputs(self):
-        # RetriviedEntities = cur.execute("""SELECT input_id, Categories.name, Subcategories.name, entity_id, offset
-        #                                 FROM Entities_inputs
-        #                                 JOIN Categories ON category_id = Categories.id
-        #                                 JOIN Subcategories ON subcategory_id = Subcategories.id """).fetchall()
-        pass
-        
-
-    def f(self):
-        return cur.execute("SELECT id FROM Sub_Categories WHERE name IS NULL").fetchone()
+    def get_sentences(self) -> SentencesResponseDTO:
+        return SentencesResponseDTO([Sentences(*sentence) for sentence in cur.execute("""SELECT
+                                                                        Sentences.text,
+                                                                        Sentiments.name,
+                                                                        Sentences.compliance,
+                                                                        offset
+                                                                    FROM Sentences_inputs
+                                                                    JOIN Inputs
+                                                                        ON Inputs.id = input_id
+                                                                    JOIN Sentences
+                                                                        ON Sentences.id = sentence_id
+                                                                    JOIN Sentiments
+                                                                        ON Sentiments.id = Sentences.sentiment_id
+                                                                    WHERE input_id == (?)
+                                                                    ORDER BY offset ASC""",(self.input_id,)).fetchall()], sentiment_name=self.sentiment_name)
+    def get_entities_inputs(self) -> EntitiesResponseDTO:
+       return EntitiesResponseDTO([EntityDTO(*entity) for entity in cur.execute("""SELECT
+                                                Entities.entity AS EntityName, 
+                                                Categories.name AS category,
+                                                Sub_Categories.name AS SubCategory, 
+                                                Entities_Inputs.offset,
+                                                Entities.compliance
+                                            FROM Categories
+                                            JOIN Entities_Inputs 
+                                                ON Entities_Inputs.category_id = Categories.id
+                                            JOIN Sub_Categories 
+                                                ON Entities_Inputs.subcategory_id = Sub_categories.id
+                                            JOIN Entities 
+                                                ON Entities_Inputs.entity_id = Entities.id
+                                            WHERE input_id = ?
+                                                                """, (self.input_id,)).fetchall()])
+    def get_tags(self) -> TagsResponseDTO:
+        return TagsResponseDTO([Tags(name=tag[0]) for tag in cur.execute("""SELECT name FROM Text_tags
+                                                JOIN Tags
+                                                ON tag_id = Tags.id
+                                                WHERE input_id = ? """, (self.input_id,) ).fetchall()])
+    def get_linked_entities(self) -> List[str]:
+        return (1,2)
+    
+    def get_language(self):
+        return cur.execute("SELECT language FROM Inputs WHERE id = ?", (self.input_id,)).fetchone()[0]
 

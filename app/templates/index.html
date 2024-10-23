@@ -1,6 +1,9 @@
 
 <video id="myVideo" src="static/video.mp4" width="200px" controls></video>
 
+<h1 class="text-white">
+    {{sentiment}}
+</h1>
 
 <div class="box-chat">
     <section class="chat">
@@ -8,9 +11,9 @@
             <div class=" ">
                 <table class="table-output">
                     <caption class="th-line">
-                        Overal text sentiment : {{sentiment[0].sentiment | upper}}
+                        Overal text sentiment : {{ sentiment.sentiment_name | upper }}
                         <br>
-                        Text lang : {{language[0].primary_language.name}}
+                        {# Text lang : {{sentiment.sentiment}} #}
                     </caption>
                     <thead class="">
                         <tr>
@@ -29,7 +32,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for sentence in sentiment[0].sentences %}
+                        {% for sentence in sentiment.sentences %}
                         <tr >
                             <th >
                                 {{ sentence.text }}
@@ -38,10 +41,10 @@
                                 {{ sentence.offset }}
                             </th>
                             <td >
-                                {{ sentence.sentiment }}
+                                {{ sentence.sentiment_name }}
                             </td>
                             <td >
-                                {{ (sentence.confidence_scores[sentence.sentiment] * 100) | int }} %
+                                {{ sentence.confidence }}
                             </td>
                         </tr>
                         {% endfor %}
@@ -65,13 +68,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for entity in entities[0].entities %}
+                    {% for entity in entities.entities %}
                     <tr>
-                        <td>{{entity.text}}</td>
+                        <td>{{entity.entity_name}}</td>
                         <td>{{entity.category}}</td>
-                        <td>{{entity.subcategory}}</td>
+                        <td>{{entity.subcategory or 'Un-sub-categorized'}}</td>
                         <td>{{entity.offset}}</td>
-                        <td>{{(entity.confidence_score * 100) | int}} %</td>
+                        <td>{{(entity.confidence )}}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -94,7 +97,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for linked_entity in linked_entities[0].entities %}
+                            {% for linked_entity in linked_entities.linked_entities %}
                                 <tr>
                                     <td >{{linked_entity.name}}</td>
                                     <td ><a href="{{linked_entity.url}}">{{linked_entity.url}}</a></td>
@@ -109,13 +112,13 @@
             {% if key_phrases %}
             <div class="tags-row">
                 <button>Tags: </button>
-                    {% for tag in key_phrases[0].key_phrases %}
-                        <button>{{tag | title }}</button>
+                    {% for tag in  key_phrases.tags%}
+                        <button>{{tag.name | title }}</button>
                     {% endfor %}
             </div>
             {% endif %}
     </section>
-</div>
+</div> 
 
 
 
@@ -154,14 +157,6 @@
         </form>
     </div>
 </div>
-{% for msg in get_flashed_messages() %}
-
-{{msg}}
-
-{% endfor %}
-
-
-
 
 <link rel="stylesheet" href="static/output.css">
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>

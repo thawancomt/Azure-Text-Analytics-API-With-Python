@@ -1,13 +1,15 @@
 import sqlite3
-from typing import Generator, Tuple, List, Any
+from typing import Generator, Tuple, Any
+
 
 from azure.ai.textanalytics import (RecognizeEntitiesResult, CategorizedEntity, RecognizeLinkedEntitiesResult, LinkedEntity, LinkedEntityMatch,
-                                    AnalyzeSentimentResult, ExtractKeyPhrasesResult, DetectLanguageResult )
+                                    AnalyzeSentimentResult)
 
 conn = sqlite3.connect('interections.sqlite', check_same_thread=False)
 cur = conn.cursor()
 
 class SqliteDatabase:
+    """The interface to the sqlite database"""
     def __init__(self):
         self.CreateTables()
     
@@ -16,7 +18,8 @@ class SqliteDatabase:
                         CREATE TABLE IF NOT EXISTS Inputs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                         input TEXT UNIQUE,
-                        sentiment_id INTEGER
+                        sentiment_id INTEGER,
+                        language VARCHAR(4)
                         );
                         
                         CREATE TABLE IF NOT EXISTS Sentences (
@@ -106,8 +109,8 @@ class SqliteDatabase:
         conn.commit()
 
     def __ExtractSentiments(self, sentiment: list) -> Generator[str, Any, None]:
-        overral_sentiment = str(sentiment[0].sentiment) 
         
+        overral_sentiment = str(sentiment[0].sentiment)
         sentences = []
         for sentence in sentiment[0].sentences:
                 
@@ -122,16 +125,17 @@ class SqliteDatabase:
         yield overral_sentiment        
         yield sentences
 
-    def Insert(self, UserInput : str, sentiment : list[AnalyzeSentimentResult],
+    def Insert(self, UserInput : str, language : str, sentiment : list[AnalyzeSentimentResult],
                entities : list[RecognizeEntitiesResult],
                linked_entities : list[RecognizeLinkedEntitiesResult],
                key_phrases : list[int]):
         
         sentiments = self.__ExtractSentiments(sentiment)
+
         OverallSentiment : str = next(sentiments)
         sentences = [sentence for sentence in next(sentiments)]
 
-        self.InsertInput(UserInput, OverallSentiment)
+        self.InsertInput(UserInput, OverallSentiment, language)
 
         self.InsertSentences(sentences)
 
@@ -252,9 +256,9 @@ class SqliteDatabase:
                 cur.execute("INSERT OR IGNORE INTO Entities (entity, category_id, subcategory_id, compliance) values (?, ?, ?, ?)", (Text, CategoryId, SubCategoryId, Compliance))
                 conn.commit()
 
-    def InsertInput(self, UserInput : str, Sentiment : str) -> None:
+    def InsertInput(self, UserInput : str, Sentiment : str, language : str) -> None:
         SentimentId = self.GetSentimentByName(Sentiment)[0]
-        cur.execute("INSERT OR IGNORE INTO Inputs (input, sentiment_id) values (?, ?)", (UserInput, SentimentId))
+        cur.execute("INSERT OR IGNORE INTO Inputs (input, sentiment_id, language) values (?, ?, ?)", (UserInput, SentimentId, language.name))
         conn.commit()
         
 
