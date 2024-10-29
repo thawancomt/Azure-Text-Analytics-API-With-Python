@@ -2,6 +2,8 @@ import sqlite3
 from typing import Generator, Tuple, Any
 
 
+from DTO import *
+
 from azure.ai.textanalytics import (RecognizeEntitiesResult, CategorizedEntity, RecognizeLinkedEntitiesResult, LinkedEntity, LinkedEntityMatch,
                                     AnalyzeSentimentResult)
 
@@ -108,22 +110,24 @@ class SqliteDatabase:
         cur.execute("INSERT OR IGNORE INTO Sub_Categories (name) values (?)", (SubCategory, ))
         conn.commit()
 
-    def __ExtractSentiments(self, sentiment: list) -> Generator[str, Any, None]:
+    def __ExtractSentiments(self, sentiment: SentencesResponseDTO) -> Generator[str, Any, None]:
         
-        overral_sentiment = str(sentiment[0].sentiment)
+        overral_sentiment = str(sentiment.sentiment_name)
         sentences = []
-        for sentence in sentiment[0].sentences:
+        for sentence in sentiment.sentences:
                 
-                self.InsertSentiment(sentence.sentiment)
+                
+                self.InsertSentiment(sentence.sentiment_name)
+
                 sentences.append(
                                     (str(sentence.text),
-                                    int(self.GetSentimentByName(str(sentence.sentiment))[0]),
-                                    float(sentence.confidence_scores[sentence.sentiment]) * 100,
+                                    int(self.GetSentimentByName(str(sentence.sentiment_name))),
+                                    float(sentence.confidence) * 100,
                                     sentence.offset)
                                     
                                 )
         yield overral_sentiment        
-        yield sentences
+        yield sentences 
 
     def Insert(self, UserInput : str, language : str, sentiment : list[AnalyzeSentimentResult],
                entities : list[RecognizeEntitiesResult],
@@ -153,7 +157,7 @@ class SqliteDatabase:
 
         self.InsertEntitiesInputs(UserInput, entities)
     
-    def InsertEntitiesInputs(self, UserInput : str, Entities : list):
+    def InsertEntitiesInputs(self, UserInput : str, Entities : EntitiesResponseDTO):
         """
         CREATE TABLE IF NOT EXISTS Entities_Inputs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -164,37 +168,37 @@ class SqliteDatabase:
                         offset INTEGER
                         );
         """
-        Entities : list[CategorizedEntity] = Entities[0].entities
-
         InputId = cur.execute("SELECT id FROM Inputs WHERE input = (?)", (UserInput,)).fetchone()[0]
 
-        for Entity in Entities:
-            CategoryId = self.GetCategoryByName(Entity.category)[0]
+        for Entity in Entities.entities:
+            CategoryId = self.GetCategoryByName(Entity.category)
             SubCategoryId = self.GetSubCategoryByName(Entity.subcategory)
 
             if SubCategoryId is None:
                 SubCategoryId = None
-                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id IS NULL", (Entity.text, CategoryId)).fetchone()[0]
+                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id IS NULL", (Entity.entity_name, CategoryId)).fetchone()[0]
             else:
-                SubCategoryId = SubCategoryId[0]
-                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (Entity.text, CategoryId, SubCategoryId)).fetchone()[0]
+                SubCategoryId : int = SubCategoryId
+                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (Entity.entity_name, CategoryId, SubCategoryId)).fetchone()[0]
             
-            OffSet = Entity.offset
 
-            ThisRelationExist = cur.execute("SELECT 1 FROM Entities_inputs WHERE input_id = ? AND entity_id = ? AND category_id = ? AND subcategory_id = ? AND offset = ?", (InputId, EntityId, CategoryId, SubCategoryId, OffSet)).fetchone()
+            ThisRelationExist = cur.execute("SELECT 1 FROM Entities_inputs WHERE input_id = ? AND entity_id = ? AND category_id = ? AND subcategory_id = ? AND offset = ?", (InputId, EntityId, CategoryId, SubCategoryId, Entity.offset)).fetchone()
 
             if not ThisRelationExist:
 
                 cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id, offset) values (?, ?, ?, ?, ?)",
-                            (InputId, EntityId, CategoryId, SubCategoryId, OffSet))
+                            (InputId, EntityId, CategoryId, SubCategoryId, Entity.offset))
                 
                 conn.commit()
 
-    def InsertTextTags(self, UserInput : str, Tags) -> None:
-        Tags : list[str] = Tags[0].key_phrases
+    def InsertTextTags(self, UserInput : str, Tags_ : TagsResponseDTO) -> None:
+
+        
+        tags = Tags_.tags
         InputId = cur.execute("SELECT id FROM Inputs WHERE input == (?)", (UserInput,)).fetchone()[0]
-        for tag in Tags:
-            TagId = cur.execute("SELECT id FROM Tags WHERE name == (?)", (tag,)).fetchone()[0]
+
+        for tag in tags:
+            TagId = cur.execute("SELECT id FROM Tags WHERE name == (?)", (tag.name,)).fetchone()[0]
 
             ThisRelationExist = cur.execute("SELECT 1 FROM Text_tags WHERE input_id = ? AND tag_id = ?", (InputId, TagId)).fetchone()
 
@@ -202,7 +206,7 @@ class SqliteDatabase:
                 cur.execute("INSERT OR IGNORE INTO Text_tags (input_id, tag_id) values (?, ?)", (InputId, TagId))
                 conn.commit()
 
-    def InsertSentencesTags(self, Sentences : list[str], Tags : list[str]) -> None:
+    def InsertSentencesTags(self, Sentences : SentencesResponseDTO, Tags_ : TagsResponseDTO) -> None:
         """
         CREATE TABLE IF NOT EXISTS Sentences_tags (
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -212,8 +216,8 @@ class SqliteDatabase:
         """
         for sentence, sentimentId, confidence, offset in Sentences:
             SentenceId = cur.execute("SELECT id FROM Sentences WHERE text == (?)", (sentence,)).fetchone()[0]
-            for tag in Tags[0].key_phrases:
-                TagId = cur.execute("SELECT id FROM Tags WHERE Tags.name == (?)", (tag,)).fetchone()[0]
+            for tag in Tags_.tags:
+                TagId = cur.execute("SELECT id FROM Tags WHERE Tags.name == (?)", (tag.name,)).fetchone()[0]
 
                 ThisRelationExist = cur.execute("SELECT 1 FROM Sentences_tags WHERE sentence_id == (?) AND tag_id == (?)", (SentenceId, TagId)).fetchone()
                 if not ThisRelationExist:
@@ -232,10 +236,9 @@ class SqliteDatabase:
                 cur.execute("INSERT OR IGNORE INTO Sentences_inputs (input_id, sentence_id, offset) values (?, ?, ?)", (InputId, sentence_Id, offset)) 
                 conn.commit()
 
-    def InsertEntity(self, entity) -> None:
-        entities : list[CategorizedEntity] = entity[0].entities
+    def InsertEntity(self, entities : EntitiesResponseDTO) -> None:
 
-        for entity in entities:
+        for entity in entities.entities:
             self.__InsertCategory(entity.category)
 
             if entity.subcategory:
@@ -246,35 +249,36 @@ class SqliteDatabase:
                 self.__InsertSubCategory(None)
             
             
-            Text, CategoryId= entity.text, self.GetCategoryByName(entity.category)[0]
-            SubCategoryId = self.GetSubCategoryByName(SubCategoryId)[0]
+            Text = entity.entity_name
+            CategoryId=  self.GetCategoryByName(entity.category)
+            SubCategoryId = self.GetSubCategoryByName(SubCategoryId)
 
-            ThisRelationExists = cur.execute("SELECT entity, category_id, subcategory_id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (entity.text, CategoryId, SubCategoryId)).fetchone()
+            ThisRelationExists = cur.execute("SELECT entity, category_id, subcategory_id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (entity.entity_name, CategoryId, SubCategoryId)).fetchone()
             
             if not ThisRelationExists:
-                Compliance = entity.confidence_score
+                Compliance = entity.confidence
                 cur.execute("INSERT OR IGNORE INTO Entities (entity, category_id, subcategory_id, compliance) values (?, ?, ?, ?)", (Text, CategoryId, SubCategoryId, Compliance))
                 conn.commit()
 
     def InsertInput(self, UserInput : str, Sentiment : str, language : str) -> None:
-        SentimentId = self.GetSentimentByName(Sentiment)[0]
-        cur.execute("INSERT OR IGNORE INTO Inputs (input, sentiment_id, language) values (?, ?, ?)", (UserInput, SentimentId, language.name))
+        SentimentId = self.GetSentimentByName(Sentiment)
+        cur.execute("INSERT OR IGNORE INTO Inputs (input, sentiment_id, language) values (?, ?, ?)", (UserInput, SentimentId, language))
         conn.commit()
         
 
     def GetCategoryByName(self, Category) -> tuple[int]:
-        return cur.execute("SELECT id FROM Categories WHERE name == (?)", (Category,)).fetchone()
+        return cur.execute("SELECT id FROM Categories WHERE name == (?)", (Category,)).fetchone()[0]
 
     def GetSubCategoryByName(self, SubCategory) -> tuple[int]:
         if SubCategory is None:
-            return cur.execute("SELECT id FROM Sub_Categories WHERE name IS NULL").fetchone()
+            return cur.execute("SELECT id FROM Sub_Categories WHERE name IS NULL").fetchone()[0]
         
-        return cur.execute("SELECT id FROM Sub_Categories WHERE name == (?)", (SubCategory,)).fetchone()
+        return cur.execute("SELECT id FROM Sub_Categories WHERE name == (?)", (SubCategory,)).fetchone()[0]
 
-    def InsertTags(self, Tags) -> None:
-        Tags : list[str] = Tags[0].key_phrases
+    def InsertTags(self, tags : TagsResponseDTO) -> None:
+        tags = [Tags(name = tag.name) for tag in tags.tags]
         
-        cur.executemany("INSERT OR IGNORE INTO Tags (name) values (?)", [(Tag, ) for Tag in Tags])
+        cur.executemany("INSERT OR IGNORE INTO Tags (name) values (?)", [(Tag.name, ) for Tag in tags])
         conn.commit()
 
     def InsertSentiment(self, sentiment : str) -> int:
@@ -284,7 +288,7 @@ class SqliteDatabase:
         return sentiment_id
     
     def GetSentimentByName(self, name : str) -> list[Tuple]:
-        return cur.execute("SELECT id FROM Sentiments WHERE name == (?)", (str(name), )).fetchone()
+        return cur.execute("SELECT id FROM Sentiments WHERE name == (?)", (str(name), )).fetchone()[0]
     
     def InsertSentences(self, senteces : list) -> None:
         cur.executemany("INSERT OR IGNORE INTO Sentences (text, sentiment_id, compliance) values (?, ?, ?)", [(name, sentiment_id, compliance) for name, sentiment_id, compliance, offset in senteces])
@@ -297,12 +301,12 @@ class SqliteDatabase:
     def GetSourceByName(self, source : str) -> list[tuple[int]]:
         return cur.execute("SELECT id FROM Sources WHERE name == (?)", (source, )).fetchone()
 
-    def InsertLinkedEntities(self, linked_entities) -> None:
-        LinkedEntities : list[LinkedEntity] = linked_entities[0].entities
-        for entity in LinkedEntities:
+    def InsertLinkedEntities(self, linked_entities : LinkedEntitiesResponseDTO) -> None:
+        for entity in linked_entities.linked_entities:
+
             Text = entity.name
-            Matches : list[LinkedEntityMatch] = entity.matches
-            Compliance = Matches[0].confidence_score
+            Matches = entity.matches
+            Compliance = Matches.confidence_score
             Url = entity.url
             Source = entity.data_source
 

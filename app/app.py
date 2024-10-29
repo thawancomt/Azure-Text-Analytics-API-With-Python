@@ -36,6 +36,8 @@ class TextApp:
             payload : dict = request.form.to_dict()
             user_input = payload.get('text')
 
+            self.TextAnalizer.document = user_input
+
             actions_to_execute = payload.keys()
 
 
@@ -43,14 +45,17 @@ class TextApp:
 
                 retrived_analyze = RetriveAnalysis(user_input=user_input)
 
+
                 if retrived_analyze.input_id:
                     context['sentiment'] = retrived_analyze.get_sentences()
+
                     context['entities'] = retrived_analyze.get_entities_inputs()
                     context['linked_entities'] = retrived_analyze.get_linked_entities()
                     context['key_phrases'] = retrived_analyze.get_tags()
                     context['language'] = retrived_analyze.get_language()
 
                 else:
+                    
                     completed_analyze = self.TextAnalizer.GetAllInformation()
 
                     context['sentiment'] = completed_analyze.sentiment
@@ -58,9 +63,8 @@ class TextApp:
                     context['linked_entities'] = completed_analyze.linked_entities
                     context['key_phrases'] = completed_analyze.key_phrases
                     context['language'] = completed_analyze.language
-                    
-                    self.database.Insert(user_input, context['language'], context['sentiment'], context['entities'],
-                                        context['linked_entities'], context['key_phrases'])
+                
+                self.database.Insert(user_input, 'English', context['sentiment'], context['entities'], context['linked_entities'], context['key_phrases'] )
             else:
                 # Individual analyzers
                 if 'sentiment' in actions_to_execute:

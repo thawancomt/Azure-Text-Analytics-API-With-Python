@@ -64,7 +64,7 @@ class LinkedEntitiesDTO:
     name : str
     url : str
     data_source : str
-    matches : list[MatchesDTO]
+    matches : MatchesDTO
 
 @dataclass
 class LinkedEntitiesResponseDTO:
