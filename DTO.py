@@ -80,3 +80,12 @@ class LanguageDTO:
 class LanguageResponseDTO:
     """Data Transfer Object for Language Response"""
     language : list[LanguageDTO]
+
+@dataclass
+class TextAnalyzedDTO:
+    """Data Transfer Object for Azure Response"""
+    sentiment : SentencesResponseDTO = None
+    entities : EntitiesResponseDTO = None
+    linked_entities : LinkedEntitiesResponseDTO = None
+    key_phrases : TagsResponseDTO = None
+    language : LanguageResponseDTO = None

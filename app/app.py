@@ -54,26 +54,26 @@ class TextApp:
                     context['language'] = retrived_analyze.get_language()
 
                 else:
-                    
-                    completed_analyze = self.TextAnalizer.GetAllInformation()
+                    completed_analysis = self.TextAnalizer.get_all_analysis()
 
-                    context['sentiment'] = completed_analyze.sentiment
-                    context['entities'] = completed_analyze.entities
-                    context['linked_entities'] = completed_analyze.linked_entities
-                    context['key_phrases'] = completed_analyze.key_phrases
-                    context['language'] = completed_analyze.language
+                    context['sentiment'] = completed_analysis.sentiment
+                    context['entities'] = completed_analysis.entities
+                    context['linked_entities'] = completed_analysis.linked_entities
+                    context['key_phrases'] = completed_analysis.key_phrases
+                    context['language'] = completed_analysis.language
+                    return context
                     self.database.Insert(user_input, 'English', context['sentiment'], context['entities'], context['linked_entities'], context['key_phrases'] )
             else:
                 # Individual analyzers
                 if 'sentiment' in actions_to_execute:
-                    context['sentiment'] = self.TextAnalizer.GetSentiment()
+                    context['sentiment'] = self.TextAnalizer.get_sentiment()
                 if 'entities' in actions_to_execute:
-                    context['entities'] = self.TextAnalizer.GetEntities()
+                    context['entities'] = self.TextAnalizer.get_entities()
                 if 'linked_entities' in actions_to_execute:
-                    context['linked_entities'] = self.TextAnalizer.GetLinkedEntities()
+                    context['linked_entities'] = self.TextAnalizer.get_linked_entities()
                 if 'key_phrases' in actions_to_execute:
-                    context['key_phrases'] = self.TextAnalizer.GetKeyPhrases()
-            context['language'] = self.TextAnalizer.GetLanguage()
+                    context['key_phrases'] = self.TextAnalizer.get_tags()
+            context['language'] = self.TextAnalizer.get_language()
         else:
             pass
 
