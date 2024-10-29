@@ -129,7 +129,7 @@ class SqliteDatabase:
         yield overral_sentiment        
         yield sentences 
 
-    def Insert(self, UserInput : str, language : str, sentiment : list[AnalyzeSentimentResult],
+    def Insert(self, UserInput : str, language : str, sentiment : SentencesResponseDTO,
                entities : list[RecognizeEntitiesResult],
                linked_entities : list[RecognizeLinkedEntitiesResult],
                key_phrases : list[int]):

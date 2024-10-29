@@ -48,7 +48,6 @@ class TextApp:
 
                 if retrived_analyze.input_id:
                     context['sentiment'] = retrived_analyze.get_sentences()
-
                     context['entities'] = retrived_analyze.get_entities_inputs()
                     context['linked_entities'] = retrived_analyze.get_linked_entities()
                     context['key_phrases'] = retrived_analyze.get_tags()
@@ -63,8 +62,7 @@ class TextApp:
                     context['linked_entities'] = completed_analyze.linked_entities
                     context['key_phrases'] = completed_analyze.key_phrases
                     context['language'] = completed_analyze.language
-                
-                self.database.Insert(user_input, 'English', context['sentiment'], context['entities'], context['linked_entities'], context['key_phrases'] )
+                    self.database.Insert(user_input, 'English', context['sentiment'], context['entities'], context['linked_entities'], context['key_phrases'] )
             else:
                 # Individual analyzers
                 if 'sentiment' in actions_to_execute:

@@ -15,7 +15,6 @@ class RetriveAnalysis:
                                                 JOIN Inputs \
                                                     ON Inputs.sentiment_id = Sentiments.id \
                                                 WHERE Inputs.id = ?", (self.input_id,)).fetchone()
-        print(self.sentiment_name)
         if self.sentiment_name:
             self.sentiment_name = self.sentiment_name[0]
 
@@ -28,20 +27,20 @@ class RetriveAnalysis:
         return self.input_id
 
     def get_sentences(self) -> SentencesResponseDTO:
-        a =  cur.execute("""SELECT
+        return SentencesResponseDTO([Sentences(*sentence) for sentence in cur.execute("""SELECT
                                                                         Sentences.text,
                                                                         Sentiments.name,
                                                                         Sentences.compliance,
                                                                         offset
                                                                     FROM Sentences_inputs
-                                                                        JOIN Inputs
-                                                                            ON Inputs.id = input_id
-                                                                        JOIN Sentences
-                                                                            ON Sentences.id = sentence_id
-                                                                        JOIN Sentiments
-                                                                            ON Sentiments.id = Sentences.sentiment_id
-                                                                        WHERE input_id = ?
-                                                                        ORDER BY offset ASC""",(3,)).fetchall()
+                                                                    JOIN Inputs
+                                                                        ON Inputs.id = input_id
+                                                                    JOIN Sentences
+                                                                        ON Sentences.id = sentence_id
+                                                                    JOIN Sentiments
+                                                                        ON Sentiments.id = Sentences.sentiment_id
+                                                                    WHERE input_id == (?)
+                                                                    ORDER BY offset ASC""",(self.input_id,)).fetchall()], sentiment_name=self.sentiment_name)
         print(a)
         return a
     def get_entities_inputs(self) -> EntitiesResponseDTO:
