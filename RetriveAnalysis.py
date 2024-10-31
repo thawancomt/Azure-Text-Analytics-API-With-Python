@@ -85,35 +85,34 @@ class RetriveAnalysis:
                                                 WHERE input_id = ? """, (self.input_id,) ).fetchall()
             ]
         )
-    def get_linked_entities(self, sentences) -> LinkedEntitiesResponseDTO:
-        """
-        Get the linked entities from the database
-        """
+    def get_linked_entities(self) -> LinkedEntitiesResponseDTO:
+        """Get the linked entities from the database."""
+        if not self.input_id:
+            return LinkedEntitiesResponseDTO([])
 
-        for sentence in sentences.sentences:
-            sentence_id = SqliteDatabase().get_sentence_id_by_text(sentence.text)
-            print(sentence_id)
-            sentences_tags = cur.execute("""SELECT name FROM Sentences_tags
-                                            JOIN Tags
-                                                ON tag_id = Tags.id
-                                            WHERE sentence_id = ? """, (sentence_id,)).fetchall()
-            print(type(sentences_tags))
-            
+        try:
+            cur.execute("""
+                SELECT Linked_Entities.entity, Linked_Entities.url, Sources.name, Linked_Entities.compliance
+                FROM linked_entities_inputs
+                INNER JOIN Linked_Entities ON linked_entities_inputs.linked_entity_id = Linked_Entities.id
+                INNER JOIN Sources ON Linked_Entities.source_id = Sources.id
+                WHERE linked_entities_inputs.input_id = ?
+            """, (self.input_id,))
 
-        # TODO: Implement this method
-        q = """SELECT
-                    Linked_Entities.entity,
-                    Linked_Entities.category,
-                    Linked_Entities.subcategory,
-                    Linked_Entities.offset,
-                    Linked_Entities.compliance
-                FROM Linked_Entities"""
-        return []
-        return LinkedEntitiesResponseDTO(
-            linked_entities = [
-                LinkedEntitiesDTO(*linked_entity) for linked_entity in cur.execute(q).fetchall()
-            ]
-        )
+            linked_entities_data = []
+            for row in cur.fetchall():
+                linked_entities_data.append(LinkedEntitiesDTO(
+                    name=row[0],
+                    url=row[1],
+                    data_source=row[2],
+                    matches=MatchesDTO(text=row[0], confidence_score=row[3])
+                ))
+
+            return LinkedEntitiesResponseDTO(linked_entities_data)
+
+        except Exception as e:
+            print(f"Error retrieving linked entities: {e}")
+            return LinkedEntitiesResponseDTO([])
     
     def get_language(self):
         return cur.execute("SELECT language FROM Inputs WHERE id = ?", (self.input_id,)).fetchone()[0]

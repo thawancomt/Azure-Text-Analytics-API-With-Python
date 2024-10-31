@@ -97,11 +97,13 @@ class App:
                 if retrieved_analysis_data.input_id:
                     context['sentiment'] = retrieved_analysis_data.get_sentences()
                     context['entities'] = retrieved_analysis_data.get_entities_inputs()
-                    context['linked_entities'] = retrieved_analysis_data.get_linked_entities(sentences=context['sentiment'])
+                    # TODO: Implement the linked entities
+                    context['linked_entities'] = retrieved_analysis_data.get_linked_entities()
                     context['key_phrases'] = retrieved_analysis_data.get_tags()
                     context['language'] = retrieved_analysis_data.get_language()
 
                     return context
+
 
                 else:
                     analysis_result = self.text_analyzer.get_all_analysis()
@@ -121,8 +123,6 @@ class App:
                     self.database.key_phrases = context['key_phrases']
                     
                     self.database.insert()
-
-                    return context
 
             else:
                 # Individual analyzers

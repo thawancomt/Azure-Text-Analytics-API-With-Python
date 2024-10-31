@@ -110,6 +110,11 @@ class SqliteDatabase:
                         sentence_id INTEGER,
                         offset INTEGER
                         );
+                        CREATE TABLE IF NOT EXISTS linked_entities_inputs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+                        input_id INTEGER,
+                        linked_entity_id INTEGER
+                        );
                           """)
         conn.commit()
 
@@ -140,15 +145,17 @@ class SqliteDatabase:
 
         self.insert_text_tags()
 
-        self.InsertSentencesTags(self.sentences, key_phrases)
+        self.insert_sentence_tags()
 
         self.insert_sentence_inputs()
 
-        # self.InsertEntitiesInputs(self.user_input, entities)
+        self.insert_entities_inputs()
+
+        self.insert_linked_entities_inputs()
 
         # TODO : Make commit here instead in each insert method
     
-    def InsertEntitiesInputs(self, UserInput : str, Entities : EntitiesResponseDTO):
+    def insert_entities_inputs(self):
         """
         CREATE TABLE IF NOT EXISTS Entities_Inputs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -159,36 +166,47 @@ class SqliteDatabase:
                         offset INTEGER
                         );
         """
-        InputId = cur.execute("SELECT id FROM Inputs WHERE input = (?)", (UserInput,)).fetchone()[0]
 
-        for Entity in Entities.entities:
-            CategoryId = self.GetCategoryByName(Entity.category)
-            SubCategoryId = self.GetSubCategoryByName(Entity.subcategory)
+        # Logic steps
+        # 1. Get the input id by the user input
+        # 2. Get the entity id by the entity name
+        # 3. Get the category id by the category name
+        # 4. Get the sub category id by the sub category name
+        # 5. Insert the entities inputs in the database using the input id, entity id, category id, sub category id and the offset
+        input_id = self.get_input_id_by_user_input(self.user_input)
 
-            if SubCategoryId is None:
-                SubCategoryId = None
-                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id IS NULL", (Entity.entity_name, CategoryId)).fetchone()[0]
-            else:
-                SubCategoryId : int = SubCategoryId
-                EntityId = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (Entity.entity_name, CategoryId, SubCategoryId)).fetchone()[0]
+        for entity in self.entities.entities:
+
+            category_id = self.get_category_by_name(entity.category)
+            sub_category_id = self.get_sub_category_by_name(entity.subcategory)
+
+            entity_id = cur.execute("SELECT id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)", (entity.entity_name, category_id, sub_category_id)).fetchone()[0]
             
 
-            ThisRelationExist = cur.execute("SELECT 1 FROM Entities_inputs WHERE input_id = ? AND entity_id = ? AND category_id = ? AND subcategory_id = ? AND offset = ?", (InputId, EntityId, CategoryId, SubCategoryId, Entity.offset)).fetchone()
+            if cur.execute("SELECT 1 FROM Entities_inputs WHERE input_id = ? AND entity_id = ? AND category_id = ? AND subcategory_id = ? AND offset = ?", (input_id, entity_id, category_id, sub_category_id, entity.offset)).fetchone():
+                continue
 
-            if not ThisRelationExist:
-
-                cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id, offset) values (?, ?, ?, ?, ?)",
-                            (InputId, EntityId, CategoryId, SubCategoryId, Entity.offset))
+            cur.execute("INSERT OR IGNORE INTO Entities_inputs (input_id, entity_id, category_id, subcategory_id, offset) values (?, ?, ?, ?, ?)",
+                            (input_id, entity_id, category_id, sub_category_id, entity.offset))
                 
-                conn.commit()
+        conn.commit()
 
     def get_input_id_by_user_input(self, user_input : str) -> int:
+        """
+        Get the input id by the user input
+        """
         return cur.execute("SELECT id FROM Inputs WHERE input = ?", (user_input,)).fetchone()[0]
 
     def get_tag_id_by_name(self, tag_name : str) -> int:
+        """
+        Get the tag id by the tag name
+        """
         return cur.execute("SELECT id FROM Tags WHERE name = ?", (tag_name,)).fetchone()[0]
 
     def insert_text_tags(self) -> None:
+        """
+        Insert the text tags in the database
+        """
 
         input_id = self.get_input_id_by_user_input(self.user_input)
 
@@ -209,7 +227,7 @@ class SqliteDatabase:
         # 1. Get the sentence id by the text
         # 2. Get the tag id by the tag name
         # 3. Insert the sentence tags in the database using the sentence id and the tag id
-        
+
         for sentence in self.sentiment.sentences:
             sentence_id = self.get_sentence_id_by_text(sentence.text)
 
@@ -220,11 +238,14 @@ class SqliteDatabase:
                     continue
 
                 cur.execute("INSERT OR IGNORE INTO Sentences_tags (sentence_id, tag_id) values (?, ?)", (sentence_id, tag_id))
-                conn.commit()   
+                conn.commit()
         
         
     
     def insert_sentence_inputs(self) -> None:
+        """
+        Insert the sentence inputs in the database
+        """
         input_id = self.get_input_id_by_user_input(self.user_input)
 
         for sentence in self.sentiment.sentences:
@@ -246,13 +267,13 @@ class SqliteDatabase:
 
             self.__insert_sub_category(entity.subcategory)
             
-            category_id =  self.GetCategoryByName(entity.category)
-            sub_category_id = self.GetSubCategoryByName(entity.subcategory)
+            category_id =  self.get_category_by_name(entity.category)
+            sub_category_id = self.get_sub_category_by_name(entity.subcategory)
             confidence = entity.confidence
 
             if cur.execute("SELECT entity, category_id, subcategory_id FROM Entities WHERE entity = (?) AND category_id = (?) AND subcategory_id = (?)",
                                              (entity.entity_name, category_id, sub_category_id)).fetchone():
-                return None
+                continue
             
             cur.execute("INSERT OR IGNORE INTO Entities (entity, category_id, subcategory_id, compliance) values (?, ?, ?, ?)",
                         (entity.entity_name, category_id, sub_category_id, confidence)
@@ -282,31 +303,77 @@ class SqliteDatabase:
         conn.commit()
         
 
-    def GetCategoryByName(self, Category) -> tuple[int]:
-        return cur.execute("SELECT id FROM Categories WHERE name == (?)", (Category,)).fetchone()[0]
+    def get_category_by_name(self, category) -> tuple[int]:
+        """
+        Get the category ID from the Categories table by category name
+        
+        Args:
+            category (str): The name of the category to look up
+            
+        Returns:
+            int: The ID of the matching category
+        """
+        return cur.execute("SELECT id FROM Categories WHERE name == (?)", (category,)).fetchone()[0]
 
-    def GetSubCategoryByName(self, sub_category) -> tuple[int]:
+    def get_sub_category_by_name(self, sub_category) -> tuple[int]:
+        """
+        Get the subcategory ID from the Sub_Categories table by subcategory name
+        
+        Args:
+            sub_category (str): The name of the subcategory to look up
+            
+        Returns:
+            int: The ID of the matching subcategory
+        """
         return cur.execute("SELECT id FROM Sub_Categories WHERE name == (?)", (sub_category or 'None',)).fetchone()[0]
 
     def insert_tags(self) -> None:
+        """
+        Insert tags from key_phrases into the Tags table
         
+        Inserts each tag name from self.key_phrases.tags into the Tags table,
+        ignoring any duplicates
+        """
         cur.executemany("INSERT OR IGNORE INTO Tags (name) values (?)", [(tag.name, ) for tag in self.key_phrases.tags])
         conn.commit()
 
     def insert_sentiment(self) -> int:
+        """
+        Insert sentiment name into the Sentiments table
+        
+        Inserts the sentiment name from self.sentiment into the Sentiments table,
+        ignoring duplicates
+        """
         cur.execute("INSERT OR IGNORE INTO Sentiments (name) values (?) ", (self.sentiment.sentiment_name,))
         conn.commit()
     
     def get_sentiment_id_by_name(self, name : str) -> list[Tuple]:
+        """
+        Get the sentiment ID from the Sentiments table by sentiment name
+        
+        Args:
+            name (str): The name of the sentiment to look up
+            
+        Returns:
+            int: The ID of the matching sentiment
+        """
         return cur.execute(
                 "SELECT id FROM Sentiments WHERE name == (?)", (str(name),)
                 ).fetchone()[0]
     
     def insert_sentences(self) -> None:
+        """
+        Insert sentences into the Sentences table
+        
+        For each sentence in self.sentiment.sentences:
+        - Gets the sentiment ID for the sentence's sentiment
+        - Inserts the sentence text, sentiment ID and confidence score into the Sentences table
+        - Ignores duplicate entries
+        """
 
         if self.sentiment is None:
-            # TODO: Loggin the error
-            return
+            # TODO: We should fix this at some point  # [fixme]
+            return None
 
         for sentence in self.sentiment.sentences:
             sentence_text = sentence.text
@@ -316,7 +383,8 @@ class SqliteDatabase:
             self.insert_sentiment()
             sentiment_id = self.get_sentiment_id_by_name(name = sentence_sentiment_name)
 
-            cur.execute("INSERT OR IGNORE INTO Sentences (text, sentiment_id, compliance) values (?, ?, ?)", (sentence_text, sentiment_id, sentence_sentiment_confidence))
+            cur.execute("INSERT OR IGNORE INTO Sentences (text, sentiment_id, compliance) values (?, ?, ?)",
+                        (sentence_text, sentiment_id, sentence_sentiment_confidence))
 
         # TODO: remove the commit from here
         conn.commit()
@@ -337,27 +405,40 @@ class SqliteDatabase:
         Insert the linked entities in the database
         """
         for entity in self.linked_entities.linked_entities:
+            self.insert_source(entity.data_source)
 
-            entity_name = entity.name
-            matches = entity.matches
-            confidence = matches.confidence_score
-            entity_url = entity.url
-            entity_data_source = entity.data_source
-
-
-            self.insert_source(entity_data_source)
-
-            source_id = self.get_data_source_id_by_name(entity_data_source)[0]
+            source_id = self.get_data_source_id_by_name(entity.data_source)[0]
 
             cur.execute("INSERT OR IGNORE INTO Linked_entities (entity, url, source_id, compliance) values (?, ?, ?, ?)",
-                        (entity_name, entity_url, source_id, confidence))
+                        (entity.name, entity.url, source_id, entity.matches.confidence_score))
             conn.commit()
+            
+    def insert_linked_entities_inputs(self) -> None:
+        """
+        Insert the linked entities inputs in the database
+        """
+        input_id = self.get_input_id_by_user_input(self.user_input)
+
+        for entity in self.linked_entities.linked_entities:
+            linked_entity_id = self.get_linked_entities_id_by_name(entity.name)
+
+            if cur.execute("SELECT 1 FROM linked_entities_inputs WHERE input_id = ? AND linked_entity_id = ?", (input_id, linked_entity_id)).fetchone():
+                continue
+
+            cur.execute("INSERT OR IGNORE INTO linked_entities_inputs (input_id, linked_entity_id) values (?, ?)", (input_id, linked_entity_id))
+            conn.commit()
+    
+    def get_linked_entities_id_by_name(self, name : str) -> int:
+        """
+        Get the linked entities id by the name
+        """
+        return cur.execute("SELECT id FROM Linked_Entities WHERE entity = ?", (name,)).fetchone()[0]
 
     def get_sentence_id_by_text(self, text : str) -> int:
         """
         Get the sentence id by the text
         """
-        return cur.execute("SELECT id FROM Sentences WHERE text == (?)", (text,)).fetchone()
+        return cur.execute("SELECT id FROM Sentences WHERE text == (?)", (text,)).fetchone()[0]
     
     def get_tags_id_by_sentence_id(self, sentence_id : int) -> list[int]:
         """
