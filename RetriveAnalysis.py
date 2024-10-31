@@ -1,6 +1,6 @@
 from typing import List
 
-from app.models.Model import cur, SqliteDatabase
+from app.database_services.database_controller import cur, SqliteDatabase
 
 from DTO import *
 

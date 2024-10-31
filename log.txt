@@ -1,0 +1,50 @@
+2024-10-31 16:34:26,001 - app.app - INFO - Initialiazing the Azure Text Analytics SDK
+2024-10-31 16:34:26,496 - app.app - INFO - Routes / registered
+2024-10-31 16:34:27,201 - app.app - INFO - Initialiazing the Azure Text Analytics SDK
+2024-10-31 16:34:27,714 - app.app - INFO - Routes / registered
+2024-10-31 16:34:28,027 - app.app - INFO - POST > registered
+2024-10-31 16:34:28,028 - app.app - INFO - POST > User input lenght = 246
+2024-10-31 16:34:28,028 - app.app - INFO - User input loaded into Text Analytics
+2024-10-31 16:34:28,029 - app.app - INFO - Form checkboxes loaded : ['text', 'all_actions'] 
+2024-10-31 16:34:28,029 - app.app - INFO - All actions were selected...
+2024-10-31 16:34:28,029 - app.app - INFO - Trying retrieve the analysis from the database
+2024-10-31 16:34:28,031 - app.app - INFO - Analysis already in the databases, retriving the data input_id in database: 4
+2024-10-31 16:34:28,031 - app.app - INFO - Number of Sentences loaded to context: 2
+2024-10-31 16:34:28,032 - app.app - INFO - Sentence text Sentences(text='A redução do IRC foi outro ponto criticado pelo líder bloquista, que considerou que o país "dispensa bem" a medida. ', sentiment_name='neutral', confidence=0.86, offset=None) 
+2024-10-31 16:34:28,032 - app.app - INFO - Sentence text Sentences(text='"O que precisavamos era de um Orçamento que apontasse caminhos para a economia do futuro, que garanta emprego e tempo para viver".', sentiment_name='neutral', confidence=0.81, offset=None) 
+2024-10-31 16:34:28,032 - app.app - INFO - Number of Entities loaded to context: 5
+2024-10-31 16:34:28,032 - app.app - INFO - Entity text EntityDTO(entity_name='líder', category='PersonType', subcategory='None', offset=48, confidence=0.95) 
+2024-10-31 16:34:28,032 - app.app - INFO - Entity text EntityDTO(entity_name='bloquista', category='PersonType', subcategory='None', offset=54, confidence=0.53) 
+2024-10-31 16:34:28,032 - app.app - INFO - Entity text EntityDTO(entity_name='Orçamento', category='Skill', subcategory='None', offset=146, confidence=0.94) 
+2024-10-31 16:34:28,032 - app.app - INFO - Entity text EntityDTO(entity_name='economia', category='Skill', subcategory='None', offset=186, confidence=1.0) 
+2024-10-31 16:34:28,032 - app.app - INFO - Entity text EntityDTO(entity_name='emprego', category='Skill', subcategory='None', offset=218, confidence=0.98) 
+2024-10-31 16:34:28,032 - app.app - INFO - Number of Linked Entities loaded to context: 1
+2024-10-31 16:34:28,032 - app.app - INFO - Linked Entity text LinkedEntitiesDTO(name='Infrared compact catalogue', url='https://en.wikipedia.org/wiki/Infrared_compact_catalogue', data_source='Wikipedia', matches=MatchesDTO(text='Infrared compact catalogue', confidence_score=0.06)) 
+2024-10-31 16:34:28,032 - app.app - INFO - Number of Key Phrases loaded to context: 12
+2024-10-31 16:34:28,032 - app.app - INFO - Key Phrase text Tags(name='líder bloquista') 
+2024-10-31 16:34:28,032 - app.app - INFO - Key Phrase text Tags(name='redução') 
+2024-10-31 16:34:28,032 - app.app - INFO - Key Phrase text Tags(name='país') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='Orçamento') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='IRC') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='ponto') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='medida') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='caminhos') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='economia') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='futuro') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='emprego') 
+2024-10-31 16:34:28,033 - app.app - INFO - Key Phrase text Tags(name='tempo') 
+2024-10-31 16:35:53,363 - app.app - INFO - POST > registered
+2024-10-31 16:35:53,365 - app.app - INFO - POST > User input lenght = 30
+2024-10-31 16:35:53,365 - app.app - INFO - User input loaded into Text Analytics
+2024-10-31 16:35:53,365 - app.app - INFO - Form checkboxes loaded : ['text', 'sentiment', 'key_phrases'] 
+2024-10-31 16:35:53,365 - app.app - INFO - Less than 3 actions, getting individuals analysis from Azure...
+2024-10-31 16:35:53,365 - app.app - INFO - Sentiment analysis selected...
+2024-10-31 16:35:53,365 - app.app - INFO - Performing sentiment analysis...
+2024-10-31 16:35:54,053 - app.app - INFO - Sentiment analysis performed
+2024-10-31 16:35:54,053 - app.app - INFO - Number of Sentences loaded to context: 1
+2024-10-31 16:35:54,053 - app.app - INFO - Sentence text Sentences(text='I love my dog when it is quiet', sentiment_name='positive', confidence=1.0, offset=0) 
+2024-10-31 16:35:54,053 - app.app - INFO - Key phrases analysis selected...
+2024-10-31 16:35:54,053 - app.app - INFO - Performing key phrases analysis...
+2024-10-31 16:35:54,118 - app.app - INFO - Key phrases analysis performed
+2024-10-31 16:35:54,118 - app.app - INFO - Number of Key Phrases loaded to context: 1
+2024-10-31 16:35:54,118 - app.app - INFO - Key Phrase text Tags(name='dog') 

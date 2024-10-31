@@ -1,6 +1,7 @@
 # Standart import
 import os
 import sys
+import logging
 
 # Third parties imports
 from flask import Flask, request, render_template
@@ -8,8 +9,8 @@ from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationErr
 
 # Local imports
 from RetriveAnalysis import RetriveAnalysis
-from .AzureTextAnalytics import AzureTextAnalyticsApi
-from .models.Model import SqliteDatabase
+from .azure_services.azure_text_analytics import AzureTextAnalyticsApi
+from app.database_services.database_controller import SqliteDatabase
 from DTO import *
 
 class App:
@@ -18,22 +19,42 @@ class App:
         self.app.secret_key = os.getenv('SECRET_KEY')
         self.database = SqliteDatabase()
 
+        # Logger configs
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        
+        handler = logging.FileHandler('log.txt', encoding='utf-8')
+        handler.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+
+        self.logger.addHandler(handler)
+
+
+        # Verbose logging
+        self.verbose = False
+
+
         try:
+            self.logger.info('Initialiazing the Azure Text Analytics SDK')
             self.text_analyzer : AzureTextAnalyticsApi = AzureTextAnalyticsApi()
             # TODO : Implement the test user credentials [fixme]
             # self.TextAnalizer.client.analyze_sentiment(['s'])
 
         except ResourceNotFoundError as err:
-            print(f'Check your endpoint {err.message}')
+            self.logger.critical(f'Check your endpoint {err.message}')
             sys.exit()
         except ClientAuthenticationError as err:
-            print(f'Check your Api Key {err.message}')
+            self.logger.critical(f'Check your Api Key {err.message}')
             sys.exit()
 
         self.register_routes()
 
     def register_routes(self):
+        self.logger.info('Routes %s registered' % '/')
         self.app.add_url_rule('/', 'index', methods=['GET', 'POST'], view_func=self.analyse_user_input)
+
         # self.App.add_url_rule('/<input_id>', 'get_tags', methods=['GET'], view_func=self.get_tags)
 
     def analyse_user_input(self):
@@ -71,49 +92,113 @@ class App:
 
         context : TextAnalyzedDTO = {}
 
+
         if request.method == 'POST':
+            self.logger.info('POST > registered')
 
             resquest_form : dict = request.form.to_dict()
+            self.logger.debug('POST > Form loaded')
+
             user_input = resquest_form.get('text')
+            self.logger.info(f'POST > User input lenght = {len(user_input)}')
+
+            if not user_input:
+                self.logger.info('No input registered, going back to home...')
+                return render_template('index.html', **context)
 
             self.text_analyzer.document = user_input
+            self.logger.info('User input loaded into Text Analytics')
 
             marked_checkboxes_on_form = resquest_form.keys()
+            self.logger.info(f'Form checkboxes loaded : {str([key for key in marked_checkboxes_on_form])} ')
 
 
             if 'all_actions' in marked_checkboxes_on_form or len(marked_checkboxes_on_form) > 3:
-
+                self.logger.info('All actions were selected...')
                 # Verify if the user input exists in the database.
                 # If found: Retrieve existing analysis from database
                 # If not found: Perform new analysis and store in database
                 # This caching mechanism helps avoid redundant API calls and improves performance
                 # by reusing previously analyzed content.
 
-
+                self.logger.info('Trying retrieve the analysis from the database')
                 retrieved_analysis_data = RetriveAnalysis(user_input=user_input)
 
                 
 
                 if retrieved_analysis_data.input_id:
+                    self.logger.info('Analysis already in the databases, retriving the data input_id in database: %d' % retrieved_analysis_data.input_id)
+
                     context['sentiment'] = retrieved_analysis_data.get_sentences()
+
+                    # logging
+                    self.logger.info('Number of Sentences loaded to context: %d' % len(context['sentiment'].sentences))
+                    for sentence in context['sentiment'].sentences:
+                        self.logger.info('Sentence text %s ' % sentence)
+
                     context['entities'] = retrieved_analysis_data.get_entities_inputs()
-                    # TODO: Implement the linked entities
+
+                    # Logging
+                    self.logger.info('Number of Entities loaded to context: %d' % len(context['entities'].entities))
+                    for entity in context['entities'].entities:
+                        self.logger.info('Entity text %s ' % entity)
+
                     context['linked_entities'] = retrieved_analysis_data.get_linked_entities()
+
+                    # Logging
+                    self.logger.info('Number of Linked Entities loaded to context: %d' % len(context['linked_entities'].linked_entities))
+                    for entity in context['linked_entities'].linked_entities:
+                        self.logger.info('Linked Entity text %s ' % entity)
+
                     context['key_phrases'] = retrieved_analysis_data.get_tags()
+
+                    # Logging
+                    self.logger.info('Number of Key Phrases loaded to context: %d' % len(context['key_phrases'].tags))
+                    for tag in context['key_phrases'].tags:
+                        self.logger.info('Key Phrase text %s ' % tag)
+
                     context['language'] = retrieved_analysis_data.get_language()
 
-                    return context
-
-
                 else:
+                    self.logger.info('Analysis not found in the database, performing new analysis...')
                     analysis_result = self.text_analyzer.get_all_analysis()
 
+
                     context['sentiment'] = analysis_result.sentiment
+                    
+                    # Logging
+                    self.logger.info('Sentiment analysis performed')
+                    self.logger.info('Number of Sentences loaded to context: %d' % len(context['sentiment'].sentences))
+                    for sentence in context['sentiment'].sentences:
+                        self.logger.info('Sentence text %s ' % sentence)
+
                     context['entities'] = analysis_result.entities
+
+                    # Logging
+                    self.logger.info('Entities analysis performed')
+                    self.logger.info('Number of Entities loaded to context: %d' % len(context['entities'].entities))
+                    for entity in context['entities'].entities:
+                        self.logger.info('Entity text %s ' % entity)
+
                     context['linked_entities'] = analysis_result.linked_entities
+                    
+                    # Logging
+                    self.logger.info('Linked entities analysis performed')
+                    self.logger.info('Number of Linked Entities loaded to context: %d' % len(context['linked_entities'].linked_entities))
+                    for entity in context['linked_entities'].linked_entities:
+                        self.logger.info('Linked Entity text %s ' % entity)
+
                     context['key_phrases'] = analysis_result.key_phrases
+                    
+                    # logging
+                    self.logger.info('Key phrases analysis performed')
+                    self.logger.info('Number of Key Phrases loaded to context: %d' % len(context['key_phrases'].tags))
+                    for tag in context['key_phrases'].tags:
+                        self.logger.info('Key Phrase text %s ' % tag)
+
                     context['language'] = analysis_result.language
 
+                    self.logger.info('Setting the context into database controller')
                     # Save the analysis in the database
                     self.database.user_input = user_input
                     self.database.language = context['language']
@@ -122,26 +207,67 @@ class App:
                     self.database.linked_entities = context['linked_entities']
                     self.database.key_phrases = context['key_phrases']
                     
-                    self.database.insert()
+                    
+                    try:
+                        self.logger.info('Inserting the analysis into the database')
+                        self.database.insert()
+                    except Exception as err:
+                        self.logger.error(f'Error inserting the analysis into the database {err}')
 
             else:
-                # Individual analyzers
-                if 'sentiment' in marked_checkboxes_on_form:
-                    context['sentiment'] = self.text_analyzer.get_sentiment()
+                self.logger.info('Less than 3 actions, getting individuals analysis from Azure...')
+                context = self.perform_individual_analysis(context, marked_checkboxes_on_form)
 
-                if 'entities' in marked_checkboxes_on_form:
-                    context['entities'] = self.text_analyzer.get_entities()
-
-                if 'linked_entities' in marked_checkboxes_on_form:
-                    context['linked_entities'] = self.text_analyzer.get_linked_entities()
-
-                if 'key_phrases' in marked_checkboxes_on_form:
-                    context['key_phrases'] = self.text_analyzer.get_tags()
-
-            # TODO: Implement the logging system
             # TODO: Fix the language detection
             context['language'] = 'English'
 
         return render_template('index.html', **context)
+
+    def perform_individual_analysis(self, context, marked_checkboxes_on_form):
+        if 'sentiment' in marked_checkboxes_on_form:
+            self.logger.info('Sentiment analysis selected...')
+            self.logger.info('Performing sentiment analysis...')
+
+            context['sentiment'] = self.text_analyzer.get_sentiment()
+
+            self.logger.info('Sentiment analysis performed')
+            self.logger.info('Number of Sentences loaded to context: %d' % len(context['sentiment'].sentences))
+            for sentence in context['sentiment'].sentences:
+                self.logger.info('Sentence text %s ' % sentence)
+
+        if 'entities' in marked_checkboxes_on_form:
+            self.logger.info('Entities analysis selected...')
+            self.logger.info('Performing entities analysis...')
+
+            context['entities'] = self.text_analyzer.get_entities()
+
+            self.logger.info('Entities analysis performed')
+            self.logger.info('Number of Entities loaded to context: %d' % len(context['entities'].entities))
+            for entity in context['entities'].entities:
+                self.logger.info('Entity text %s ' % entity)
+
+        if 'linked_entities' in marked_checkboxes_on_form:
+            self.logger.info('Linked entities analysis selected...')
+            self.logger.info('Performing linked entities analysis...')
+
+            context['linked_entities'] = self.text_analyzer.get_linked_entities()
+
+            self.logger.info('Linked entities analysis performed')
+            self.logger.info('Number of Linked Entities loaded to context: %d' % len(context['linked_entities'].linked_entities))
+            for entity in context['linked_entities'].linked_entities:
+                self.logger.info('Linked Entity text %s ' % entity)
+
+        if 'key_phrases' in marked_checkboxes_on_form:
+            self.logger.info('Key phrases analysis selected...')
+            self.logger.info('Performing key phrases analysis...')
+
+            context['key_phrases'] = self.text_analyzer.get_tags()
+
+            self.logger.info('Key phrases analysis performed')
+            self.logger.info('Number of Key Phrases loaded to context: %d' % len(context['key_phrases'].tags))
+            for tag in context['key_phrases'].tags:
+                self.logger.info('Key Phrase text %s ' % tag)
+        
+        return context
     
 app = App().app

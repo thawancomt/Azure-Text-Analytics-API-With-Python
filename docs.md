@@ -10,6 +10,4 @@ Get the key and endpoint and put it all into the .env file, create this .env fil
 
 
 # Transfering data across the app
-All the response need to be passed to it respective DTO object across all parts of the code.
-
-Example: Linked entities need to be passed as a LinkedEntitiesDTO object to all operations tha will handle this data.
+All data transfered across the app need to be in the DTO's format from DTO.py module.
