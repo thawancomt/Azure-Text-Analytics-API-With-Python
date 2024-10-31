@@ -12,3 +12,4 @@ wheels/
 
 # Node stuff
 app/extensions/node_modules
+/*.db

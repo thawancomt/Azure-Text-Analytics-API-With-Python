@@ -1,13 +1,16 @@
+import os
 import sqlite3
 from typing import Generator, Tuple, Any
 
 from azure.ai.textanalytics import (RecognizeEntitiesResult,
                                     RecognizeLinkedEntitiesResult)
+from dotenv import load_dotenv
 
 from DTO import *
 
+load_dotenv()
 
-conn = sqlite3.connect('interections.sqlite', check_same_thread=False)
+conn = sqlite3.connect(os.getenv('DB_PATH'), check_same_thread=False)
 cur = conn.cursor()
 
 class SqliteDatabase:

@@ -1,6 +1,6 @@
 [project]
 name = "AzureTextAnalysis"
-version = "3.0.5"
+version = "3.0.8"
 description = "A python web app that retrieves from Azure Text Analytics"
 readme = "README.md"
 requires-python = ">=3.13"
