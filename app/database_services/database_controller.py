@@ -10,6 +10,7 @@ from DTO import *
 
 load_dotenv()
 
+
 conn = sqlite3.connect(os.getenv('DB_PATH'), check_same_thread=False)
 cur = conn.cursor()
 
@@ -257,7 +258,7 @@ class SqliteDatabase:
             if cur.execute("SELECT 1 FROM Sentences_inputs WHERE input_id = ? AND sentence_id = ?", (input_id, sentence_id)).fetchone():
                 continue
 
-            cur.execute("INSERT OR IGNORE INTO Sentences_inputs (input_id, sentence_id) values (?, ?)", (input_id, sentence_id))
+            cur.execute("INSERT OR IGNORE INTO Sentences_inputs (input_id, sentence_id, offset) values (?, ?, ?)", (input_id, sentence_id, sentence.offset))
             conn.commit()
 
     def insert_entities(self) -> None:

@@ -1,21 +1,16 @@
+<link rel="stylesheet" href="static/output.css">
 
-<video id="myVideo" src="static/video.mp4" width="200px" controls></video>
 
-<h1 class="text-white">
-    {{sentiment}}
-</h1>
+<div id="result">
+
+</div>
 
 <div class="box-chat">
     <section class="chat">
-        {% if sentiment %}
-            <div class=" ">
+            <div class="" id="sentences">
                 <table class="table-output">
-                    <caption class="th-line">
-                        Overal text sentiment : {{ sentiment.sentiment_name | upper }}
-                        <br>
-                        {# Text lang : {{sentiment.sentiment}} #}
-                    </caption>
-                    <thead class="">
+                    
+                    <thead class="" id="sentencesHead">
                         <tr>
                             <th >
                                 Sentence
@@ -31,28 +26,11 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for sentence in sentiment.sentences %}
-                        <tr >
-                            <th >
-                                {{ sentence.text }}
-                            </th>
-                            <th >
-                                {{ sentence.offset }}
-                            </th>
-                            <td >
-                                {{ sentence.sentiment_name }}
-                            </td>
-                            <td >
-                                {{ sentence.confidence }}
-                            </td>
-                        </tr>
-                        {% endfor %}
+                    <tbody id="sentencesBody">
+                        
                     </tbody>
                 </table>
             </div>
-        {% endif %}
-        {% if entities %}
         <div >
             <table class="table-output">
                 <caption>
@@ -67,21 +45,11 @@
                         <th>Compliance</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for entity in entities.entities %}
-                    <tr>
-                        <td>{{entity.entity_name}}</td>
-                        <td>{{entity.category}}</td>
-                        <td>{{entity.subcategory or 'Un-sub-categorized'}}</td>
-                        <td>{{entity.offset}}</td>
-                        <td>{{(entity.confidence )}}</td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="entitiesBody">
                 </tbody>
             </table>
             
             </div>
-        {% endif %}
         {% if linked_entities %}
             <div>
                 <table class="table-output">
@@ -127,8 +95,8 @@
     <div class="box-user-input">
         <form action=" {{ url_for('index') }} " class="form-primary" id="input-user" method="post" enctype="multipart/form-data">
             <div class="text-section">
-                <input type="text" name="text" id="" class="text-entry" pattern="[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$" placeholder="Insert your text">
-                <button type="submit" class="btn-send" id="send-button">Analisar</button>   
+                <input type="text" name="text" id="user-entry" class="text-entry" placeholder="Insert your text">
+                <button type="button" class="btn-send hidden" id="send-button">Analisar</button>   
             </div>
             <div class="options">
                 <div>
@@ -153,12 +121,12 @@
                     <input type="checkbox" name="all_actions" id="">
                 </div>
             </div>
-        <input type="file" name="doc" id="s" accept="application/pdf">
         </form>
     </div>
 </div>
 
-<link rel="stylesheet" href="static/output.css">
+<h1 class="text-white" id="t"></h1>
+
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
 <script src="static/sendForm.js"></script>
