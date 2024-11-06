@@ -21,7 +21,7 @@ class Sentences:
     text : str
     sentiment_name : str
     confidence : float
-    offset : int
+    offset : int | str
 
 @dataclass
 class SentencesResponseDTO():

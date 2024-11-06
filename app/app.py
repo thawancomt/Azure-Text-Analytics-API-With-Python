@@ -4,7 +4,7 @@ import sys
 import logging
 
 # Third parties imports
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
 
 # Local imports
@@ -54,6 +54,7 @@ class App:
     def register_routes(self):
         self.logger.info('Routes %s registered' % '/')
         self.app.add_url_rule('/', 'index', methods=['GET', 'POST'], view_func=self.analyse_user_input)
+        self.app.add_url_rule('/get', 'get', methods=['GET', 'POST'], view_func=self.get)
 
         # self.App.add_url_rule('/<input_id>', 'get_tags', methods=['GET'], view_func=self.get_tags)
 
@@ -158,6 +159,7 @@ class App:
                         self.logger.info('Key Phrase text %s ' % tag)
 
                     context['language'] = retrieved_analysis_data.get_language()
+
 
                 else:
                     self.logger.info('Analysis not found in the database, performing new analysis...')
@@ -269,5 +271,19 @@ class App:
                 self.logger.info('Key Phrase text %s ' % tag)
         
         return context
+    
+    def get(self):
+        getter = RetriveAnalysis(user_input=request.form.get('text'))
+    
+        response : TextAnalyzedDTO = {
+            "sentiment" : getter.get_sentences(),
+            "entities" : getter.get_entities_inputs(),
+            "linked_entities" : getter.get_linked_entities(),
+            "key_phrases" : getter.get_tags(),
+        }
+
+        print(response)
+
+        return jsonify(response)
     
 app = App().app
