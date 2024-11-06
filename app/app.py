@@ -55,6 +55,7 @@ class App:
         self.logger.info('Routes %s registered' % '/')
         self.app.add_url_rule('/', 'index', methods=['GET', 'POST'], view_func=self.analyse_user_input)
         self.app.add_url_rule('/get', 'get', methods=['GET', 'POST'], view_func=self.get)
+        self.app.add_url_rule('/get_historic', 'get_historic', methods=['GET'], view_func=self.get_inputs_hitoric)
 
         # self.App.add_url_rule('/<input_id>', 'get_tags', methods=['GET'], view_func=self.get_tags)
 
@@ -285,5 +286,10 @@ class App:
         print(response)
 
         return jsonify(response)
+    def get_inputs_hitoric(self):
+        inputs = RetriveAnalysis.get_inputs()
+        
+
+        return jsonify(inputs)
     
 app = App().app

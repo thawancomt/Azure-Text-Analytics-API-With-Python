@@ -77,5 +77,18 @@ historicButton.on('click', () => {
 
 
 function showHistoric () {
-    $("#historic").toggleClass('hidden');
+    $.get('/get_historic', (response) => {
+        $("#historicList").empty();
+
+        for (input of response.inputs) {
+            console.log(input.text);
+            $("#historicList").append(
+                `<li class="text-left p-2 text-white">${input.text}</li>`
+            ).on('click', () => {
+                $.post('/get', { text: input.text }, setResponse, 'json');
+            });
+        }
+        $("#historic").toggleClass('hidden');
+
+    }, 'json');
 }

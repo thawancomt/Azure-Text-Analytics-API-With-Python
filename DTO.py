@@ -89,3 +89,13 @@ class TextAnalyzedDTO:
     linked_entities : LinkedEntitiesResponseDTO = None
     key_phrases : TagsResponseDTO = None
     language : LanguageResponseDTO = None
+
+@dataclass
+class InputTextDTO:
+    """Data Transfer Object for Input Text"""
+    text : str
+
+@dataclass
+class InputHitoricDTO:
+    """Data Transfer Object for Input Historical"""
+    inputs : list[InputTextDTO]

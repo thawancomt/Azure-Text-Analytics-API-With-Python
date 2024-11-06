@@ -116,4 +116,9 @@ class RetriveAnalysis:
     
     def get_language(self):
         return cur.execute("SELECT language FROM Inputs WHERE id = ?", (self.input_id,)).fetchone()[0]
+    
+    @staticmethod
+    def get_inputs() -> InputHitoricDTO:
+        a = cur.execute("SELECT input FROM Inputs ORDER BY id DESC limit 10").fetchall()
 
+        return InputHitoricDTO(inputs=[InputTextDTO(text=i[0]) for i in a])
