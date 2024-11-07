@@ -7,13 +7,7 @@ const historicButton = $('#historic-button')
 userInpt.on( 
     {
         "input" : () => {
-            if (userInpt.val()) {
-                sendButton.removeClass('hidden')
-                userInpt.addClass('animate-pulse')
-            } else {
-                userInpt.removeClass('w-3/4')
-                sendButton.addClass('hidden')
-            }
+           sendButton.toggleClass('hidden');
         }
     }
 );
@@ -21,11 +15,12 @@ userInpt.on(
 var response = null;
 
 function setResponse(data) {
-
+    console.log(data);
     if (response) {
         $("#sentencesBody").empty();
         $("#entitiesBody").empty();
         $("#linkedEntitiesBody").empty();
+        $("#tagsBody").empty();
     }
     response = data;
 
@@ -76,19 +71,25 @@ historicButton.on('click', () => {
 });
 
 
-function showHistoric () {
+function showHistoric() {
     $.get('/get_historic', (response) => {
         $("#historicList").empty();
 
-        for (input of response.inputs) {
-            console.log(input.text);
-            $("#historicList").append(
-                `<li class="text-left p-2 text-white">${input.text}</li>`
-            ).on('click', () => {
-                $.post('/get', { text: input.text }, setResponse, 'json');
+        response.inputs.forEach((input, index) => {
+            // Atribui um identificador único usando o índice
+            const listItem = $(`<li class="text-left p-2 text-white" data-index="${index}">${input.text}</li>`);
+            
+            listItem.on('click', (event) => {
+                const clickedText = $(event.target).text();
+                console.log(clickedText);
+                
+                $.post('/get', { text: clickedText.toString() }, setResponse, 'json');
+                
             });
-        }
-        $("#historic").toggleClass('hidden');
 
+            $("#historicList").append(listItem);
+        });
+
+        $("#historic").toggleClass('hidden');
     }, 'json');
 }

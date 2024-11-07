@@ -13,3 +13,6 @@ wheels/
 # Node stuff
 app/extensions/node_modules
 /*.db
+/*.sqlite3
+/*.sqlite
+log.txt
